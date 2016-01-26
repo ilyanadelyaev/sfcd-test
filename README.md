@@ -10,9 +10,9 @@ Using:
 Realize POST "/auto/signin" and "/auth/signup" methods for simple auth.
 Additionally auth via Facebook, Twitter and Instagram.
 
-## Setup
+## Init
 ```
-./setup.sh
+./init.sh
 source venv/bin/activate
 ```
 
