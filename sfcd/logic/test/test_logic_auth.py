@@ -16,7 +16,7 @@ class TestAuthLogic:
             assert ex.value == 'some key'
         with pytest.raises(sfcd.logic.auth.InvalidSecretKey) as ex:
             auth_logic._check_secret({})
-            assert ex.value == None
+            assert ex.value is None
 
     def test__validate_email(self, auth_logic, email, email_2):
         assert auth_logic._validate_email(email) is None
@@ -44,8 +44,12 @@ class TestAuthLogic:
             auth_logic._validate_simple(None)
             assert ex.value == ('password', None)
 
-    def test__validate_facebook(self, auth_logic, facebook_id, facebook_token):
-        assert auth_logic._validate_facebook(facebook_id, facebook_token) is None
+    def test__validate_facebook(
+            self, auth_logic, facebook_id, facebook_token
+    ):
+        assert auth_logic._validate_facebook(
+            facebook_id, facebook_token
+        ) is None
         #
         with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex:
             auth_logic._validate_facebook('', facebook_token)

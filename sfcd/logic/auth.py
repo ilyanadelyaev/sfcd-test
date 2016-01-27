@@ -13,6 +13,7 @@ class AuthError(Exception):
     def __str__(self):
         return 'Unknown auth error with: "{}"'.format(self.value)
 
+
 class InvalidSecretKey(AuthError):
     """
     Secret key invalid or not specified
@@ -22,6 +23,7 @@ class InvalidSecretKey(AuthError):
     def __str__(self):
         return 'Invalid secret key: "{}"'.format(self.value)
 
+
 class InvalidAuthType(AuthError):
     """
     auth type not supported
@@ -30,6 +32,7 @@ class InvalidAuthType(AuthError):
 
     def __str__(self):
         return 'Invalid auth type: "{}"'.format(self.value)
+
 
 class InvalidArgument(AuthError):
     """
@@ -41,6 +44,7 @@ class InvalidArgument(AuthError):
         return 'Ivalid argument {} = "{}"'.format(
             self.value[0], self.value[1])
 
+
 class AlreadyRegistered(AuthError):
     """
     Cannot signup
@@ -50,6 +54,7 @@ class AlreadyRegistered(AuthError):
 
     def __str__(self):
         return 'Email "{}" already registered'.format(self.value)
+
 
 class LoginError(AuthError):
     """
@@ -158,7 +163,8 @@ class AuthLogic(object):
         # check params
         self._validate_facebook(facebook_id, facebook_token)
         # add record to db
-        self.db_engine.auth.add_facebook_auth(email, facebook_id, facebook_token)
+        self.db_engine.auth.add_facebook_auth(
+            email, facebook_id, facebook_token)
 
     def signin(self, data):
         """

@@ -5,16 +5,14 @@ class TestDBEngine:
     @staticmethod
     def _check_attribute_exists(obj, var_name):
         return (
-            hasattr(obj, var_name)
-        and
+            hasattr(obj, var_name) and
             not callable(getattr(obj, var_name))
         )
 
     @staticmethod
     def _check_method_exists(obj, method_name):
         return (
-            hasattr(obj, method_name)
-        and
+            hasattr(obj, method_name) and
             callable(getattr(obj, method_name))
         )
 

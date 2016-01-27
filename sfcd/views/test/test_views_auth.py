@@ -22,7 +22,8 @@ def web_app(sql_engine_url):
 
 class TestAuth:
     def test__signup__invalid_secret_key(self, web_app):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': 'secret_key_1',
                 'type': 'simple',
@@ -35,7 +36,8 @@ class TestAuth:
 
     def test__signup__invalid_auth_type(
             self, web_app, api_secret_key, email):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'invalid_type_1',
@@ -50,7 +52,8 @@ class TestAuth:
     def test__signup__invalid_email(
             self, web_app, api_secret_key
     ):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -70,7 +73,8 @@ class TestAuth:
         sfcd.app.db_engine.auth.add_simple_auth(
             email, password)
         #
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -87,7 +91,8 @@ class TestAuth:
             self, web_app, api_secret_key,
             email, password
     ):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -103,7 +108,8 @@ class TestAuth:
     def test__signup__simple__invalid_password(
             self, web_app, api_secret_key, email
     ):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -119,7 +125,8 @@ class TestAuth:
             self, web_app, api_secret_key,
             email, facebook_id, facebook_token
     ):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'facebook',
@@ -136,7 +143,8 @@ class TestAuth:
     def test__signup__facebook__ivalid_facebook_id(
             self, web_app, api_secret_key, email
     ):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'facebook',
@@ -151,7 +159,8 @@ class TestAuth:
     def test__signup__facebook__ivalid_facebook_token(
             self, web_app, api_secret_key, email, facebook_id
     ):
-        resp = web_app.post_json('/auth/signup/',
+        resp = web_app.post_json(
+            '/auth/signup/',
             {
                 'secret': api_secret_key,
                 'type': 'facebook',
@@ -166,7 +175,8 @@ class TestAuth:
             'Ivalid argument facebook_token = ""'
 
     def test__signin__invalid_secret_key(self, web_app):
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': 'secret_key_2',
                 'type': 'simple',
@@ -179,7 +189,8 @@ class TestAuth:
 
     def test__signin__invalid_auth_type(
             self, web_app, api_secret_key, email):
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'invalid_type_2',
@@ -194,7 +205,8 @@ class TestAuth:
     def test__signin__invalid_email(
             self, web_app, api_secret_key
     ):
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -210,7 +222,8 @@ class TestAuth:
         self, web_app, api_secret_key,
         email, password
     ):
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -231,7 +244,8 @@ class TestAuth:
         sfcd.app.db_engine.auth.add_simple_auth(
             email, password)
         #
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -249,7 +263,8 @@ class TestAuth:
         sfcd.app.db_engine.auth.add_simple_auth(
             email, password)
         #
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'simple',
@@ -270,7 +285,8 @@ class TestAuth:
         sfcd.app.db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'facebook',
@@ -289,7 +305,8 @@ class TestAuth:
         sfcd.app.db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
-        resp = web_app.post_json('/auth/signin/',
+        resp = web_app.post_json(
+            '/auth/signin/',
             {
                 'secret': api_secret_key,
                 'type': 'facebook',

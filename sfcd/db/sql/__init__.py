@@ -16,7 +16,8 @@ class DBEngine(object):
     """
 
     def __init__(self, engine_url):
-        self.engine, self.session_maker = self.init_engine(engine_url=engine_url)
+        self.engine, self.session_maker = \
+            self.init_engine(engine_url=engine_url)
 
     @staticmethod
     def init_engine(engine_url):

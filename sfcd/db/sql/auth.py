@@ -32,8 +32,10 @@ class Simple(sfcd.db.sql.BaseModel):
         sqlalchemy.ForeignKey('auth_id.id'),
         primary_key=True,  # hack
     )
-    hashed = sqlalchemy.Column(sqlalchemy.String(128)) # hashlib.sha512.hexdigest
-    salt = sqlalchemy.Column(sqlalchemy.String(32))  # uuid4.hex
+    # hashlib.sha512.hexdigest
+    hashed = sqlalchemy.Column(sqlalchemy.String(128))
+    # uuid4.hex
+    salt = sqlalchemy.Column(sqlalchemy.String(32))
 
 
 class Facebook(sfcd.db.sql.BaseModel):
@@ -65,7 +67,7 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         return bool(
             session.query(sqlalchemy.sql.exists().where(
-                ID.email==email)).scalar()
+                ID.email == email)).scalar()
         )
 
     def add_simple_auth(self, email, password):
@@ -93,8 +95,7 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         session = self.get_session()
         #
-        p = session.query(Simple).join(ID).filter(
-            ID.email==email).first()
+        p = session.query(Simple).join(ID).filter(ID.email == email).first()
         if not p:
             return False
         #
@@ -113,7 +114,10 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         session.add(i)
         session.flush()
         f = Facebook(
-            auth_id=i.id, facebook_id=facebook_id, facebook_token=facebook_token)
+            auth_id=i.id,
+            facebook_id=facebook_id,
+            facebook_token=facebook_token,
+        )
         session.add(f)
         session.commit()
 
@@ -126,9 +130,9 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         q = session.query(Facebook).join(ID).filter(
             sqlalchemy.sql.expression.and_(
-                ID.email==email,
-                Facebook.facebook_id==facebook_id,
-                Facebook.facebook_token==facebook_token,
+                ID.email == email,
+                Facebook.facebook_id == facebook_id,
+                Facebook.facebook_token == facebook_token,
             )
         )
         return bool(session.query(q.exists()).scalar())

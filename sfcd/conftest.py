@@ -46,6 +46,7 @@ def facebook_id_2():
 def facebook_token():
     return str(uuid.uuid4())
 
+
 # DB's
 
 @pytest.fixture(scope='session')
