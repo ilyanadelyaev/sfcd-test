@@ -15,4 +15,8 @@ if __name__ == '__main__':
     sfcd.app = sfcd.Application(db_type, db_url)
 
     # run web app
-    sfcd.app.web_view.run(debug=sfcd.config.FLASK_DEBUG)
+    sfcd.app.web_view.run(
+        host=sfcd.config.FLASK_HOST,
+        port=sfcd.config.FLASK_PORT,
+        debug=sfcd.config.FLASK_DEBUG,
+    )

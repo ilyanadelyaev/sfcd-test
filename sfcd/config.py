@@ -17,4 +17,6 @@ AUTH_METHODS = ('simple', 'facebook')
 
 # Flask
 
+FLASK_HOST = 'localhost'
+FLASK_PORT = 8080
 FLASK_DEBUG = False
