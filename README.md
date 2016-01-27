@@ -28,6 +28,12 @@ source venv/bin/activate
 ./run.sh
 ```
 
+## Test shots
+```
+console_0 $ ./run.sh
+console_1 $ ./test_shots.sh
+```
+
 ## Clean
 ```
 deactivate
