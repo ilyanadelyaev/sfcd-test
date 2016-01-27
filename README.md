@@ -5,7 +5,6 @@ Auth API for mobile apps with user registration in database.
 Using:
 * Flask
 * SQLAlchemy
-* MongoEngine
 
 Realize POST "/auto/signin" and "/auth/signup" methods for simple auth.
 Additionally auth via Facebook, Twitter and Instagram.
