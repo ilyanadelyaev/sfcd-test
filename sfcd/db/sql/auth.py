@@ -22,7 +22,7 @@ class ID(sfcd.db.sql.BaseModel):
 
 class Simple(sfcd.db.sql.BaseModel):
     """
-    "password" for simple auth method
+    "password" and "salt" for simple auth method
     """
     __tablename__ = 'auth_simple'
 
@@ -31,7 +31,8 @@ class Simple(sfcd.db.sql.BaseModel):
         sqlalchemy.ForeignKey('auth_id.id'),
         primary_key=True,  # hack
     )
-    password = sqlalchemy.Column(sqlalchemy.String(100))
+    password = sqlalchemy.Column(sqlalchemy.String(200))
+    salt = sqlalchemy.Column(sqlalchemy.String(32))  # uuid4.hex
 
 
 class Facebook(sfcd.db.sql.BaseModel):
@@ -66,7 +67,7 @@ class AuthManager(sfcd.db.sql.ManagerBase):
                 ID.email==email)).scalar()
         )
 
-    def add_simple_auth(self, email, password):
+    def add_simple_auth(self, email, password, salt):
         """
         add simple auth record
         """
@@ -78,11 +79,11 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         i = ID(email=email)
         session.add(i)
         session.flush()
-        p = Simple(auth_id=i.id, password=password)
+        p = Simple(auth_id=i.id, password=password, salt=salt)
         session.add(p)
         session.commit()
 
-    def check_simple_auth(self, email, password):
+    def check_simple_auth(self, email, password, salt):
         """
         check simple auth record
         """
@@ -93,6 +94,7 @@ class AuthManager(sfcd.db.sql.ManagerBase):
             sqlalchemy.sql.expression.and_(
                 ID.email==email,
                 Simple.password==password,
+                Simple.salt==salt,
             )
         )
         return bool(session.query(q.exists()).scalar())

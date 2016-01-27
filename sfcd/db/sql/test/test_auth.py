@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 
 import sqlalchemy.sql
@@ -12,36 +10,6 @@ import sfcd.db.sql.auth
 ########################################
 # fixtures
 ########################################
-
-@pytest.fixture
-def email():
-    return '{}@example.com'.format(uuid.uuid4())
-
-
-@pytest.fixture
-def email_2():
-    return '{}@example.com'.format(uuid.uuid4())
-
-
-@pytest.fixture
-def password():
-    return str(uuid.uuid4())
-
-
-@pytest.fixture
-def facebook_id():
-    return str(uuid.uuid4())
-
-
-@pytest.fixture
-def facebook_id_2():
-    return str(uuid.uuid4())
-
-
-@pytest.fixture
-def facebook_token():
-    return str(uuid.uuid4())
-
 
 @pytest.fixture(scope='session')
 def auth_manager(session_maker):
@@ -74,29 +42,30 @@ class TestModels:
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             session.commit()
 
-    def test__simple(self, session, email, password):
+    def test__simple(self, session, email, password, salt):
         """
         test simple auth creation
         """
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
         session.add(p)
         session.commit()
         p = session.query(sfcd.db.sql.auth.Simple).join(
             sfcd.db.sql.auth.ID).filter(
             sfcd.db.sql.auth.ID.email==email).one()
         assert p.password == password
+        assert p.salt == salt
 
-    def test__rollback(self, session, email, password):
+    def test__rollback(self, session, email, password, salt):
         """
         test rollback for auth records
         """
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
         session.add(p)
         session.flush()
         session.rollback()
@@ -105,15 +74,15 @@ class TestModels:
         assert not session.query(sqlalchemy.sql.exists().where(
             sfcd.db.sql.auth.Simple.password==password)).scalar()
 
-    def test__simple__same_id(self, session, email, password):
+    def test__simple__same_id(self, session, email, password, salt):
         """
         test simple auth creation with same auth.id
         """
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p_1 = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password)
-        p_2 = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password)
+        p_1 = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
+        p_2 = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
         session.add_all([p_1, p_2])
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             session.commit()
@@ -188,58 +157,60 @@ class TestManager:
         """
         assert not auth_manager._is_auth(email)
 
-    def test__add_simple_auth(self, session, auth_manager, email, password):
+    def test__add_simple_auth(self, session, auth_manager, email, password, salt):
         """
         add simple auth and check result
         """
-        auth_manager.add_simple_auth(email, password)
+        auth_manager.add_simple_auth(email, password, salt)
         #
         q = session.query(
             sfcd.db.sql.auth.Simple).join(sfcd.db.sql.auth.ID).filter(
                 sqlalchemy.sql.expression.and_(
                     sfcd.db.sql.auth.ID.email==email,
                     sfcd.db.sql.auth.Simple.password==password,
+                    sfcd.db.sql.auth.Simple.salt==salt,
                 )
         )
         assert session.query(q.exists()).scalar()
 
-    def test__add_simple_auth__empty_email(self, auth_manager, password):
+    def test__add_simple_auth__empty_email(self, auth_manager, password, salt):
         """
         add simple auth with empty email
         """
         with pytest.raises(AttributeError):
-            auth_manager.add_simple_auth('', password)
+            auth_manager.add_simple_auth('', password, salt)
         with pytest.raises(AttributeError):
-            auth_manager.add_simple_auth(None, password)
+            auth_manager.add_simple_auth(None, password, salt)
 
-    def test__check_simple_auth(self, auth_manager, email, password, session):
+    def test__check_simple_auth(self, session, auth_manager, email, password, salt):
         """
         test if simple auth exists
         """
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
         session.add(p)
         session.commit()
         #
-        assert auth_manager.check_simple_auth(email, password)
+        assert auth_manager.check_simple_auth(email, password, salt)
 
     def test__check_simple_auth__not_exists(
-            self, auth_manager, email, password, session):
+            self, session, auth_manager, email, password, salt):
         """
         test if simple auth not exists
         """
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
         session.add(p)
         session.commit()
         #
-        assert not auth_manager.check_simple_auth(email, '')
-        assert not auth_manager.check_simple_auth('', password)
-        assert not auth_manager.check_simple_auth('', '')
+        assert not auth_manager.check_simple_auth(email, '', '')
+        assert not auth_manager.check_simple_auth('', password, '')
+        assert not auth_manager.check_simple_auth('', password, salt)
+        assert not auth_manager.check_simple_auth('', '', salt)
 
     def test__add_facebook_auth(
             self, session, auth_manager, email, facebook_id, facebook_token):
