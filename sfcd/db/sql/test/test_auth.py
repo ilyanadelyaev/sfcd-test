@@ -4,6 +4,7 @@ import sqlalchemy.sql
 import sqlalchemy.sql.expression
 import sqlalchemy.exc
 
+import sfcd.misc
 import sfcd.db.sql.auth
 
 
@@ -42,47 +43,53 @@ class TestModels:
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             session.commit()
 
-    def test__simple(self, session, email, password, salt):
+    def test__simple(self, session, email, password):
         """
         test simple auth creation
         """
+        hashed, salt = sfcd.misc.hash_password(password)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
         session.add(p)
         session.commit()
         p = session.query(sfcd.db.sql.auth.Simple).join(
             sfcd.db.sql.auth.ID).filter(
             sfcd.db.sql.auth.ID.email==email).one()
-        assert p.password == password
+        assert p.hashed == hashed
         assert p.salt == salt
 
-    def test__rollback(self, session, email, password, salt):
+    def test__rollback(self, session, email, password):
         """
         test rollback for auth records
         """
+        hashed, salt = sfcd.misc.hash_password(password)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
         session.add(p)
         session.flush()
         session.rollback()
         assert not session.query(sqlalchemy.sql.exists().where(
             sfcd.db.sql.auth.ID.email==email)).scalar()
         assert not session.query(sqlalchemy.sql.exists().where(
-            sfcd.db.sql.auth.Simple.password==password)).scalar()
+            sfcd.db.sql.auth.Simple.hashed==hashed)).scalar()
 
-    def test__simple__same_id(self, session, email, password, salt):
+    def test__simple__same_id(self, session, email, password):
         """
         test simple auth creation with same auth.id
         """
+        hashed, salt = sfcd.misc.hash_password(password)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p_1 = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
-        p_2 = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
+        p_1 = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
+        p_2 = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
         session.add_all([p_1, p_2])
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             session.commit()
@@ -157,60 +164,65 @@ class TestManager:
         """
         assert not auth_manager.auth_exists(email)
 
-    def test__add_simple_auth(self, session, auth_manager, email, password, salt):
+    def test__add_simple_auth(self, session, auth_manager, email, password):
         """
         add simple auth and check result
         """
-        auth_manager.add_simple_auth(email, password, salt)
+        auth_manager.add_simple_auth(email, password)
+        #
+        hashed, salt = sfcd.misc.hash_password(password)
         #
         q = session.query(
             sfcd.db.sql.auth.Simple).join(sfcd.db.sql.auth.ID).filter(
                 sqlalchemy.sql.expression.and_(
                     sfcd.db.sql.auth.ID.email==email,
-                    sfcd.db.sql.auth.Simple.password==password,
+                    sfcd.db.sql.auth.Simple.hashed==hashed,
                     sfcd.db.sql.auth.Simple.salt==salt,
-                )
+            )
         )
-        assert session.query(q.exists()).scalar()
+        return bool(session.query(q.exists()).scalar())
 
-    def test__add_simple_auth__empty_email(self, auth_manager, password, salt):
+    def test__add_simple_auth__empty_email(self, auth_manager, password):
         """
         add simple auth with empty email
         """
         with pytest.raises(AttributeError):
-            auth_manager.add_simple_auth('', password, salt)
+            auth_manager.add_simple_auth('', password)
         with pytest.raises(AttributeError):
-            auth_manager.add_simple_auth(None, password, salt)
+            auth_manager.add_simple_auth(None, password)
 
-    def test__check_simple_auth(self, session, auth_manager, email, password, salt):
+    def test__check_simple_auth(self, session, auth_manager, email, password):
         """
         test if simple auth exists
         """
+        hashed, salt = sfcd.misc.hash_password(password)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
         session.add(p)
         session.commit()
         #
-        assert auth_manager.check_simple_auth(email, password, salt)
+        assert auth_manager.check_simple_auth(email, password)
 
     def test__check_simple_auth__not_exists(
-            self, session, auth_manager, email, password, salt):
+            self, session, auth_manager, email, password):
         """
         test if simple auth not exists
         """
+        hashed, salt = sfcd.misc.hash_password(password)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
-        p = sfcd.db.sql.auth.Simple(auth_id=i.id, password=password, salt=salt)
+        p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
         session.add(p)
         session.commit()
         #
-        assert not auth_manager.check_simple_auth(email, '', '')
-        assert not auth_manager.check_simple_auth('', password, '')
-        assert not auth_manager.check_simple_auth('', password, salt)
-        assert not auth_manager.check_simple_auth('', '', salt)
+        assert not auth_manager.check_simple_auth(email, '')
+        assert not auth_manager.check_simple_auth('', password)
+        assert not auth_manager.check_simple_auth('', '')
 
     def test__add_facebook_auth(
             self, session, auth_manager, email, facebook_id, facebook_token):

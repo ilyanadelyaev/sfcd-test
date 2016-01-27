@@ -2,6 +2,7 @@ import sqlalchemy
 import sqlalchemy.sql
 import sqlalchemy.sql.expression
 
+import sfcd.misc
 import sfcd.db.sql
 
 
@@ -22,7 +23,7 @@ class ID(sfcd.db.sql.BaseModel):
 
 class Simple(sfcd.db.sql.BaseModel):
     """
-    "password" and "salt" for simple auth method
+    "hashed" and "salt" instead of "password" for simple auth method
     """
     __tablename__ = 'auth_simple'
 
@@ -31,7 +32,7 @@ class Simple(sfcd.db.sql.BaseModel):
         sqlalchemy.ForeignKey('auth_id.id'),
         primary_key=True,  # hack
     )
-    password = sqlalchemy.Column(sqlalchemy.String(200))
+    hashed = sqlalchemy.Column(sqlalchemy.String(128)) # hashlib.sha512.hexdigest
     salt = sqlalchemy.Column(sqlalchemy.String(32))  # uuid4.hex
 
 
@@ -67,7 +68,7 @@ class AuthManager(sfcd.db.sql.ManagerBase):
                 ID.email==email)).scalar()
         )
 
-    def add_simple_auth(self, email, password, salt):
+    def add_simple_auth(self, email, password):
         """
         add simple auth record
         """
@@ -76,28 +77,28 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         session = self.get_session()
         #
+        hashed, salt = sfcd.misc.hash_password(password)
+        #
         i = ID(email=email)
         session.add(i)
         session.flush()
-        p = Simple(auth_id=i.id, password=password, salt=salt)
+        p = Simple(auth_id=i.id, hashed=hashed, salt=salt)
         session.add(p)
         session.commit()
 
-    def check_simple_auth(self, email, password, salt):
+    def check_simple_auth(self, email, password):
         """
         check simple auth record
         """
         #
         session = self.get_session()
         #
-        q = session.query(Simple).join(ID).filter(
-            sqlalchemy.sql.expression.and_(
-                ID.email==email,
-                Simple.password==password,
-                Simple.salt==salt,
-            )
-        )
-        return bool(session.query(q.exists()).scalar())
+        p = session.query(Simple).join(ID).filter(
+            ID.email==email).first()
+        if not p:
+            return False
+        #
+        return sfcd.misc.validate_password_hash(password, p.hashed, p.salt)
 
     def add_facebook_auth(self, email, facebook_id, facebook_token):
         """

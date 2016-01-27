@@ -27,11 +27,6 @@ def password():
 
 
 @pytest.fixture
-def salt():
-    return uuid.uuid4().hex
-
-
-@pytest.fixture
 def facebook_id():
     return str(uuid.uuid4())
 
