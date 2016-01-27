@@ -2,7 +2,8 @@ import uuid
 
 import pytest
 
-import sfcd.db.sql.engine
+import sfcd.config
+import sfcd.db.sql
 
 
 ########################################
@@ -10,6 +11,11 @@ import sfcd.db.sql.engine
 ########################################
 
 # auth data
+
+@pytest.fixture(scope='session')
+def api_secret_key():
+    return sfcd.config.API_SECRET_KEY
+
 
 @pytest.fixture
 def email():
@@ -50,4 +56,4 @@ def sql_engine_url():
 @pytest.fixture(scope='session')
 def db_engine(sql_engine_url):
     # check pytest args and load --sql or --mongo database
-    return sfcd.db.sql.engine.DBEngine(sql_engine_url)
+    return sfcd.db.sql.DBEngine(sql_engine_url)

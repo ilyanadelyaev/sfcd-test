@@ -7,21 +7,43 @@ import sqlalchemy.ext.declarative
 BaseModel = sqlalchemy.ext.declarative.declarative_base()
 
 
-# init engine
-def init_engine(engine_url):
+class DBEngine(object):
     """
-    init procedure for sqlalchemy engine:
-    - create engine
-    - ensure tables
-    - get session maker
+    Hides dababase realisation from logic layer
+    Holds db_connection and all managers in one place
+    #
+    SQL-Alchemy inside
     """
-    # create engine
-    Engine = sqlalchemy.create_engine(engine_url)
-    # ensure tables
-    BaseModel.metadata.create_all(Engine)
-    # get session maker
-    Session = sqlalchemy.orm.sessionmaker(bind=Engine)
-    return Session
+
+    def __init__(self, engine_url):
+        self.engine, self.session_maker = self.init_engine(engine_url=engine_url)
+
+    @staticmethod
+    def init_engine(engine_url):
+        """
+        init procedure for sqlalchemy engine:
+        - create engine
+        - ensure tables
+        - get session maker
+        """
+        # create engine
+        Engine = sqlalchemy.create_engine(engine_url)
+        # ensure tables
+        BaseModel.metadata.create_all(Engine)
+        # get session maker
+        Session = sqlalchemy.orm.sessionmaker(bind=Engine)
+        return Engine, Session
+
+    @property
+    def auth(self):
+        """
+        auth manager lazy
+        """
+        if not hasattr(self, '_auth') or self._auth is None:
+            from . import auth  # avoid circular import
+            BaseModel.metadata.create_all(self.engine)
+            self._auth = auth.AuthManager(self.session_maker)
+        return self._auth
 
 
 class ManagerBase(object):
