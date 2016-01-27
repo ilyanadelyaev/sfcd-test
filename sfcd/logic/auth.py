@@ -9,7 +9,9 @@ class AuthError(Exception):
     """
     def __init__(self, value, *args):
         self.value = value
-        self.args = args
+
+    def __str__(self):
+        return 'Unknown auth error with: "{}"'.format(self.value)
 
 class InvalidSecretKey(AuthError):
     """
@@ -17,17 +19,27 @@ class InvalidSecretKey(AuthError):
     value = secret_key
     """
 
+    def __str__(self):
+        return 'Invalid secret key: "{}"'.format(self.value)
+
 class InvalidAuthType(AuthError):
     """
     auth type not supported
     value = auth_type
     """
 
+    def __str__(self):
+        return 'Invalid auth type: "{}"'.format(self.value)
+
 class InvalidArgument(AuthError):
     """
     auth argument not valid
     value = (arg_name, arg_value)
     """
+
+    def __str__(self):
+        return 'Ivalid argument {} = "{}"'.format(
+            self.value[0], self.value[1])
 
 class AlreadyRegistered(AuthError):
     """
@@ -36,12 +48,18 @@ class AlreadyRegistered(AuthError):
     value = email
     """
 
+    def __str__(self):
+        return 'Email "{}" already registered'.format(self.value)
+
 class LoginError(AuthError):
     """
     Error via logging procedure
     value = error_text_tepmplate
     args = teplate_params
     """
+
+    def __str__(self):
+        return 'Login error with: "{}"'.format(self.value)
 
 
 class AuthLogic(object):
@@ -105,15 +123,15 @@ class AuthLogic(object):
         email = data.get('email', None)
         self._validate_email(email)
 
-        # check if auth record exists
-        if self.db_engine.auth.auth_exists(email):
-            raise AlreadyRegistered(email)
-
         auth_type = data.get('type', 'simple')
 
         # check for allowed methods in config
         if auth_type not in sfcd.config.AUTH_METHODS:
-            auth_type = None
+            raise InvalidAuthType(auth_type)
+
+        # check if auth record exists
+        if self.db_engine.auth.auth_exists(email):
+            raise AlreadyRegistered(email)
 
         if auth_type == 'simple':
             self._simple_signup(data)
@@ -159,15 +177,15 @@ class AuthLogic(object):
         email = data.get('email', None)
         self._validate_email(email)
 
-        # check if auth record exists
-        if not self.db_engine.auth.auth_exists(email):
-            raise LoginError('Email "%s" not registred', email)
-
         auth_type = data.get('type', 'simple')
 
         # check for allowed methods in config
         if auth_type not in sfcd.config.AUTH_METHODS:
-            auth_type = None
+            raise InvalidAuthType(auth_type)
+
+        # check if auth record exists
+        if not self.db_engine.auth.auth_exists(email):
+            raise LoginError('email "{}" not registred'.format(email))
 
         if auth_type == 'simple':
             self._simple_signin(data)
@@ -187,7 +205,7 @@ class AuthLogic(object):
         #
         if not self.db_engine.auth.check_simple_auth(
                 email, password):
-            raise LoginError('Invalid password')
+            raise LoginError('invalid password')
 
     def _facebook_signin(self, data):
         email = data.get('email', None)
@@ -198,4 +216,4 @@ class AuthLogic(object):
         #
         if not self.db_engine.auth.check_facebook_auth(
                 email, facebook_id, facebook_token):
-            raise LoginError('Invalid facebook_id or facebook_token')
+            raise LoginError('invalid login data')
