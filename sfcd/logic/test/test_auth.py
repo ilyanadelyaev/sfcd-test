@@ -1,12 +1,6 @@
 import pytest
 
-import sfcd.config
 import sfcd.logic.auth
-
-
-@pytest.fixture(scope='session')
-def api_secret_key():
-    return sfcd.config.API_SECRET_KEY
 
 
 @pytest.fixture(scope='session')
