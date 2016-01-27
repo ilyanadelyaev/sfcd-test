@@ -4,6 +4,6 @@ PYTHONPATH="./:$PYTHONPATH" py.test
 
 pep8 ./sfcd
 
-# pylint
+pylint  --errors-only ./sfcd
 
 # ? coverage

@@ -7,6 +7,8 @@ class Controller(object):
         """
         auth logic lazy
         """
+        # pylint: disable=E0203
+        # because magic
         if not hasattr(self, '_auth') or self._auth is None:
             from . import auth  # avoid circular import
             self._auth = auth.AuthLogic(self.db_engine)

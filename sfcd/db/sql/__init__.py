@@ -40,6 +40,8 @@ class DBEngine(object):
         """
         auth manager lazy
         """
+        # pylint: disable=E0203
+        # because magic
         if not hasattr(self, '_auth') or self._auth is None:
             from . import auth  # avoid circular import
             BaseModel.metadata.create_all(self.engine)

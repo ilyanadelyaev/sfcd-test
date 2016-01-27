@@ -16,8 +16,8 @@ def web_app(sql_engine_url):
         db_url = sql_engine_url
     elif db_type == 'mongo':
         pass
-    sfcd.app = sfcd.Application(db_type, db_url)
-    return flask.ext.webtest.TestApp(sfcd.app.web_view)
+    sfcd.application = sfcd.Application(db_type, db_url)
+    return flask.ext.webtest.TestApp(sfcd.application.web_view)
 
 
 class TestAuth:
@@ -70,7 +70,7 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        sfcd.app.db_engine.auth.add_simple_auth(
+        sfcd.application.db_engine.auth.add_simple_auth(
             email, password)
         #
         resp = web_app.post_json(
@@ -102,7 +102,7 @@ class TestAuth:
         )
         assert resp.status_code == 200
         # check for auth
-        assert sfcd.app.db_engine.auth.check_simple_auth(
+        assert sfcd.application.db_engine.auth.check_simple_auth(
             email, password)
 
     def test__signup__simple__invalid_password(
@@ -137,7 +137,7 @@ class TestAuth:
         )
         assert resp.status_code == 200
         # check for auth
-        assert sfcd.app.db_engine.auth.check_facebook_auth(
+        assert sfcd.application.db_engine.auth.check_facebook_auth(
             email, facebook_id, facebook_token)
 
     def test__signup__facebook__ivalid_facebook_id(
@@ -241,7 +241,7 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        sfcd.app.db_engine.auth.add_simple_auth(
+        sfcd.application.db_engine.auth.add_simple_auth(
             email, password)
         #
         resp = web_app.post_json(
@@ -260,7 +260,7 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        sfcd.app.db_engine.auth.add_simple_auth(
+        sfcd.application.db_engine.auth.add_simple_auth(
             email, password)
         #
         resp = web_app.post_json(
@@ -282,7 +282,7 @@ class TestAuth:
             email, facebook_id, facebook_token
     ):
         # add record to db
-        sfcd.app.db_engine.auth.add_facebook_auth(
+        sfcd.application.db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(
@@ -302,7 +302,7 @@ class TestAuth:
             email, facebook_id, facebook_token
     ):
         # add record to db
-        sfcd.app.db_engine.auth.add_facebook_auth(
+        sfcd.application.db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(

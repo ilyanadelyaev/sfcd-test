@@ -6,9 +6,9 @@ import sfcd.db.sql
 @pytest.fixture(scope='session')
 def session_maker(sql_engine_url):
     # init engine and return session maker
-    _, session_maker = sfcd.db.sql.DBEngine.init_engine(
+    _, _session_maker = sfcd.db.sql.DBEngine.init_engine(
         engine_url=sql_engine_url)
-    return session_maker
+    return _session_maker
 
 
 @pytest.fixture

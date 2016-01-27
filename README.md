@@ -17,8 +17,16 @@ source venv/bin/activate
 ```
 
 ## Test
+* pytest
+* pep8
+* pylint
 ```
 ./test.sh
+```
+
+## Run
+```
+./run.sh
 ```
 
 ## Clean

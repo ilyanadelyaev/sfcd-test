@@ -11,11 +11,11 @@ if __name__ == '__main__':
     elif sfcd.config.DB_TYPE == 'mongo':
         db_url = sfcd.config.MONGO_DB_URL
 
-    # create app
-    sfcd.app = sfcd.Application(db_type, db_url)
+    # create application
+    sfcd.application = sfcd.Application(db_type, db_url)
 
-    # run web app
-    sfcd.app.web_view.run(
+    # run web-view
+    sfcd.application.web_view.run(
         host=sfcd.config.FLASK_HOST,
         port=sfcd.config.FLASK_PORT,
         debug=sfcd.config.FLASK_DEBUG,

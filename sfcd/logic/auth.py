@@ -7,7 +7,7 @@ class AuthError(Exception):
     """
     Common auth error
     """
-    def __init__(self, value, *args):
+    def __init__(self, value):
         self.value = value
 
     def __str__(self):
@@ -87,7 +87,7 @@ class AuthLogic(object):
     def _check_secret(self, data):
         # ? hash(secret)
         secret = data.get('secret', None)
-        if not secret == sfcd.config.API_SECRET_KEY:
+        if not secret == self.secret:
             raise InvalidSecretKey(secret)
 
     @staticmethod

@@ -1,0 +1,9 @@
+[MASTER]
+msg-template={path}:{line}: [{msg_id}({symbol}), {obj}] {msg}'
+
+
+[MESSAGES CONTROL]
+# C0103 Invalid name
+# C0111 Missing docstring
+# R0903 Too few public methods
+disable=C0103,C0111,R0903

@@ -9,12 +9,11 @@ import sfcd.logic
 blueprint = flask.Blueprint('auth', __name__)
 
 
-def register_view(app):
+def register_view(web_view):
     """
     some view register magic
     """
-    global blueprint
-    app.register_blueprint(blueprint)
+    web_view.register_blueprint(blueprint)
 
 
 @blueprint.route('/auth/signup/', methods=['POST'])
@@ -31,7 +30,7 @@ def auth_signup():
 
     try:
         # call logic.auth.signup via logic.controller
-        sfcd.app.controller.auth.signup(request_data)
+        sfcd.application.controller.auth.signup(request_data)
         resp_data = {'status': 'signup'}
         resp_code = 200
     except sfcd.logic.auth.AuthError as ex:
@@ -56,7 +55,7 @@ def auth_signin():
 
     try:
         # call logic.auth.signin via logic.controller
-        sfcd.app.controller.auth.signin(request_data)
+        sfcd.application.controller.auth.signin(request_data)
         resp_data = {'status': 'signin'}
         resp_code = 200
     except sfcd.logic.auth.AuthError as ex:

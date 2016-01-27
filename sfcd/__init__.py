@@ -5,7 +5,7 @@ import sfcd.logic
 import sfcd.views
 
 
-app = None
+application = None
 
 
 class Application(object):
