@@ -1,3 +1,5 @@
+import sqlalchemy
+import sqlalchemy.orm
 import sqlalchemy.ext.declarative
 
 
@@ -5,14 +7,30 @@ import sqlalchemy.ext.declarative
 BaseModel = sqlalchemy.ext.declarative.declarative_base()
 
 
-# create tables for all models with specified engine
-def create_tables(engine):
-    BaseModel.metadata.create_all(engine)
+# init engine
+def init_engine(engine_url):
+    """
+    init procedure for sqlalchemy engine:
+    - create engine
+    - ensure tables
+    - get session maker
+    """
+    # create engine
+    Engine = sqlalchemy.create_engine(engine_url)
+    # ensure tables
+    BaseModel.metadata.create_all(Engine)
+    # get session maker
+    Session = sqlalchemy.orm.sessionmaker(bind=Engine)
+    return Session
 
 
-#import sqlalchemy
-#import sqlalchemy.orm
+class ManagerBase(object):
+    """
+    holds session_maker and provide session for db requests
+    """
 
-#Engine = sqlalchemy.create_engine('sqlite:///:memory:', echo=True)
+    def __init__(self, session_maker):
+        self.session_maker = session_maker
 
-#Session = sqlalchemy.orm.sessionmaker(bind=Engine)
+    def get_session(self):
+        return self.session_maker()
