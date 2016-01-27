@@ -141,7 +141,7 @@ class TestModels:
 ########################################
 
 class TestManager:
-    def test__is_auth__exists(self, session, auth_manager, email):
+    def test__auth_exists(self, session, auth_manager, email):
         """
         check if auth exists in system
         """
@@ -149,13 +149,13 @@ class TestManager:
         session.add(i)
         session.commit()
         #
-        assert auth_manager._is_auth(email)
+        assert auth_manager.auth_exists(email)
 
-    def test__is_auth__not_exists(self, auth_manager, email):
+    def test__auth_exists__not(self, auth_manager, email):
         """
         check if auth not exists
         """
-        assert not auth_manager._is_auth(email)
+        assert not auth_manager.auth_exists(email)
 
     def test__add_simple_auth(self, session, auth_manager, email, password, salt):
         """

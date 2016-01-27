@@ -56,7 +56,7 @@ class Facebook(sfcd.db.sql.BaseModel):
 ########################################
 
 class AuthManager(sfcd.db.sql.ManagerBase):
-    def _is_auth(self, email):
+    def auth_exists(self, email):
         """
         check if auth exists in system
         """
