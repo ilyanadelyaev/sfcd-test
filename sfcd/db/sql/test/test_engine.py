@@ -3,7 +3,7 @@ import pytest
 
 class TestDBEngine:
     @staticmethod
-    def _check_variable_exists(obj, var_name):
+    def _check_attribute_exists(obj, var_name):
         return (
             hasattr(obj, var_name)
         and
@@ -19,7 +19,7 @@ class TestDBEngine:
         )
 
     def test__auth_manager_methods(self, db_engine):
-        assert self._check_variable_exists(
+        assert self._check_attribute_exists(
             db_engine.__class__, 'auth')
         #
         assert self._check_method_exists(
