@@ -45,7 +45,18 @@ class LoginError(AuthError):
 
 
 class AuthLogic(object):
+    """
+    make signup and signin here
+    verify all parameters here including secret key
+    hides all db magic
+
+    using aggregator funcion signup/signin with switch
+    and specific functions for auth type
+    aggregator functions are extendeble with new auth types
+    """
+
     def __init__(self, db_engine):
+        # process all operations via db engine
         self.db_engine = db_engine
         # ? or get if from secret storage
         self.secret = sfcd.config.API_SECRET_KEY
@@ -58,6 +69,7 @@ class AuthLogic(object):
 
     @staticmethod
     def _validate_email(email):
+        # validate via extended package "validate-email"
         if not validate_email.validate_email(email):
             raise InvalidArgument(('email', email))
 
@@ -79,7 +91,12 @@ class AuthLogic(object):
     def signup(self, data):
         """
         check secret
+        check auth type
+        validate email
+        check if email already registered
         call type-specific method
+        extendeble with new specific methods
+        raises on error
         """
         # check api secret key
         self._check_secret(data)
@@ -128,7 +145,11 @@ class AuthLogic(object):
     def signin(self, data):
         """
         check secret
+        check email
+        check if email not registered
         call type-specific method
+        extendeble with new auth type functions
+        raises on error
         """
         # check api secret key
         self._check_secret(data)
