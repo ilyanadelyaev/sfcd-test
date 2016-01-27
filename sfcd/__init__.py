@@ -20,6 +20,7 @@ class Application(object):
         if db_type == 'sql':
             self.db_engine = sfcd.db.sql.DBEngine(db_url)
         elif db_type == 'mongo':
+            # self.db_engine = sfcd.db.mongo.DBEngine(db_url)
             pass
 
         # controller

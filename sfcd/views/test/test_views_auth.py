@@ -8,14 +8,15 @@ import sfcd
 
 
 @pytest.fixture(scope='session')
-def web_app(sql_engine_url):
-    # TODO: use pytest args here to setup db type
-    db_type = 'sql'
+def web_app(
+        sql_engine_url, mongo_engine_url, option_db
+):
+    db_type = option_db
     db_url = None
     if db_type == 'sql':
         db_url = sql_engine_url
     elif db_type == 'mongo':
-        pass
+        db_url = mongo_engine_url
     sfcd.application = sfcd.Application(db_type, db_url)
     return flask.ext.webtest.TestApp(sfcd.application.web_view)
 

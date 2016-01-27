@@ -1,6 +1,6 @@
 set -x
 
-PYTHONPATH="./:$PYTHONPATH" py.test
+PYTHONPATH="./:$PYTHONPATH" py.test --db=sql
 
 pep8 ./sfcd
 

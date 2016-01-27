@@ -55,6 +55,16 @@ def sql_engine_url():
 
 
 @pytest.fixture(scope='session')
-def db_engine(sql_engine_url):
-    # check pytest args and load --sql or --mongo database
-    return sfcd.db.sql.DBEngine(sql_engine_url)
+def mongo_engine_url():
+    return 'mongodb://localhost/database_name'
+
+
+@pytest.fixture(scope='session')
+def db_engine(
+        sql_engine_url, mongo_engine_url, option_db
+):
+    if option_db == 'sql':
+        return sfcd.db.sql.DBEngine(sql_engine_url)
+    elif option_db == 'mongo':
+        return None
+        # return sfcd.db.mongo.DBEngine(mongo_engine_url)
