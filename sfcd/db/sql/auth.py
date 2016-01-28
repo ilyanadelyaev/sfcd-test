@@ -27,6 +27,9 @@ class ID(sfcd.db.sql.base.BaseModel):
         unique=True,
         index=True,
     )
+    auth_token = sqlalchemy.Column(
+        sqlalchemy.String(sfcd.misc.Crypto.auth_token_length),
+    )
 
 
 class Simple(sfcd.db.sql.base.BaseModel):
@@ -89,7 +92,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                 ID.email == email)).scalar()
         )
 
-    def add_simple_auth(self, email, password):
+    def register_simple_auth(self, email, password):
         """
         add simple auth record
         raises on empty or non-unique email
@@ -118,25 +121,35 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         session.add(p)
         session.commit()
 
-    def check_simple_auth(self, email, password):
+    def get_token_simple_auth(self, email, password):
         """
-        check simple auth record
+        get token via sipmle auth
         raises on error
         """
         #
         session = self.get_session()
         #
-        obj = session.query(Simple).join(ID).filter(
+        obj = session.query(ID, Simple).join(Simple).filter(
             ID.email == email).first()
         if not obj:
             raise sfcd.db.exc.AuthError(
                 'email "{}" not exists'.format(email))
         #
+        i, s = obj
+        #
         if not sfcd.misc.Crypto.validate_passphrase(
-                password, obj.hashed, obj.salt):
+                password, s.hashed, s.salt):
             raise sfcd.db.exc.AuthError('invalid password')
+        # generate auth_token if needed
+        # ? what about ttl
+        if not i.auth_token:
+            i.auth_token = sfcd.misc.Crypto.generate_auth_token()
+            session.add(i)
+            session.commit()
+        #
+        return i.auth_token
 
-    def add_facebook_auth(self, email, facebook_id, facebook_token):
+    def register_facebook_auth(self, email, facebook_id, facebook_token):
         """
         add facebook auth record
         raises on empty or non-unique email or facebook_id
@@ -174,9 +187,9 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         session.add(f)
         session.commit()
 
-    def check_facebook_auth(self, email, facebook_id, facebook_token):
+    def get_token_facebook_auth(self, email, facebook_id, facebook_token):
         """
-        check facebook auth method
+        get token via facebook auth
         raises on error
         """
         #
@@ -187,7 +200,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             raise sfcd.db.exc.AuthError(
                 'email "{}" not exists'.format(email))
         #
-        obj = session.query(Facebook).join(ID).filter(
+        obj = session.query(ID, Facebook).join(Facebook).filter(
             sqlalchemy.sql.expression.and_(
                 ID.email == email,
                 Facebook.facebook_id == facebook_id,
@@ -196,6 +209,16 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             raise sfcd.db.exc.AuthError(
                 'facebook_id "{}" not exists'.format(facebook_id))
         #
+        i, f = obj
+        #
         if not sfcd.misc.Crypto.validate_passphrase(
-                facebook_token, obj.hashed, obj.salt):
+                facebook_token, f.hashed, f.salt):
             raise sfcd.db.exc.AuthError('invalid passphrase')
+        # generate auth_token if needed
+        # ? what about ttl
+        if not i.auth_token:
+            i.auth_token = sfcd.misc.Crypto.generate_auth_token()
+            session.add(i)
+            session.commit()
+        #
+        return i.auth_token

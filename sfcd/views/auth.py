@@ -61,7 +61,8 @@ def auth_signin():
 
     try:
         # call logic.auth.signin via logic.controller
-        flask.g.controller.auth.signin(request_data)
+        token = flask.g.controller.auth.signin(request_data)
+        resp_data = {'auth_token': token}
     except sfcd.logic.auth.AuthError as ex:
         logger.exception(ex)
         resp_data = {'error': str(ex)}

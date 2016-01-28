@@ -146,7 +146,7 @@ class AuthLogic(object):
         # check params
         self._validate_simple(password)
         # add record to db
-        self.db_engine.auth.add_simple_auth(email, password)
+        self.db_engine.auth.register_simple_auth(email, password)
 
     def _facebook_signup(self, data):
         email = data.get('email', None)
@@ -155,7 +155,7 @@ class AuthLogic(object):
         # check params
         self._validate_facebook(facebook_id, facebook_token)
         # add record to db
-        self.db_engine.auth.add_facebook_auth(
+        self.db_engine.auth.register_facebook_auth(
             email, facebook_id, facebook_token)
 
     def signin(self, data):
@@ -183,9 +183,9 @@ class AuthLogic(object):
 
         try:
             if auth_type == 'simple':
-                self._simple_signin(data)
+                return self._simple_signin(data)
             elif auth_type == 'facebook':
-                self._facebook_signin(data)
+                return self._facebook_signin(data)
 
             # add more auth methods here
 
@@ -198,8 +198,8 @@ class AuthLogic(object):
         password = data.get('password', None)
         # check params
         self._validate_simple(password)
-        # check db
-        self.db_engine.auth.check_simple_auth(email, password)
+        # get token or raise exception
+        return self.db_engine.auth.get_token_simple_auth(email, password)
 
     def _facebook_signin(self, data):
         email = data.get('email', None)
@@ -207,6 +207,6 @@ class AuthLogic(object):
         facebook_token = data.get('facebook_token', None)
         # check params
         self._validate_facebook(facebook_id, facebook_token)
-        # check db
-        self.db_engine.auth.check_facebook_auth(
+        # get token or raise exception
+        return self.db_engine.auth.get_token_facebook_auth(
             email, facebook_id, facebook_token)

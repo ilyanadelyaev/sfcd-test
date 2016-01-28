@@ -24,10 +24,10 @@ class TestDBEngine:
             db_engine.auth.__class__, 'email_exists')
         #
         assert self._check_method_exists(
-            db_engine.auth.__class__, 'add_simple_auth')
+            db_engine.auth.__class__, 'register_simple_auth')
         assert self._check_method_exists(
-            db_engine.auth.__class__, 'check_simple_auth')
+            db_engine.auth.__class__, 'get_token_simple_auth')
         assert self._check_method_exists(
-            db_engine.auth.__class__, 'add_facebook_auth')
+            db_engine.auth.__class__, 'register_facebook_auth')
         assert self._check_method_exists(
-            db_engine.auth.__class__, 'check_facebook_auth')
+            db_engine.auth.__class__, 'get_token_facebook_auth')

@@ -39,3 +39,7 @@ class TestCrypto:
         assert len(salt) == sfcd.misc.Crypto.salt_lenght
         #
         assert sfcd.misc.Crypto.validate_passphrase(password, hashed, salt)
+
+    def test__generate_auth_token(self):
+        assert len(sfcd.misc.Crypto.generate_auth_token()) == \
+            sfcd.misc.Crypto.auth_token_length

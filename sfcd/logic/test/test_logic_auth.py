@@ -178,7 +178,7 @@ class TestAuthLogic:
     def test__signup__already_exists(
             self, db_engine, auth_logic, api_secret_key, email, password
     ):
-        db_engine.auth.add_simple_auth(email, password)
+        db_engine.auth.register_simple_auth(email, password)
         #
         with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
             auth_logic.signup({
@@ -236,7 +236,7 @@ class TestAuthLogic:
             email, password
     ):
         # create record
-        db_engine.auth.add_simple_auth(email, password)
+        db_engine.auth.register_simple_auth(email, password)
         #
         with pytest.raises(sfcd.logic.auth.InvalidAuthType) as ex_info:
             auth_logic.signin({
@@ -251,7 +251,7 @@ class TestAuthLogic:
             email, password
     ):
         # create record
-        db_engine.auth.add_simple_auth(email, password)
+        db_engine.auth.register_simple_auth(email, password)
         # invalid email
         with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
             auth_logic.signin({
@@ -286,7 +286,8 @@ class TestAuthLogic:
             email, facebook_id, facebook_token
     ):
         # create record
-        db_engine.auth.add_facebook_auth(email, facebook_id, facebook_token)
+        db_engine.auth.register_facebook_auth(
+            email, facebook_id, facebook_token)
         # invalid email
         with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
             auth_logic.signin({
@@ -323,29 +324,89 @@ class TestAuthLogic:
             email, password
     ):
         # create record
-        db_engine.auth.add_simple_auth(email, password)
+        db_engine.auth.register_simple_auth(email, password)
         #
-        assert auth_logic.signin({
+        token = auth_logic.signin({
             'secret': api_secret_key,
             'type': 'simple',
             'email': email,
             'password': password,
-        }) is None
+        })
+        #
+        token_db = db_engine.auth.get_token_simple_auth(
+            email, password)
+        #
+        assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert token == token_db
+
+    def test__signin__simple__equal_tokens(
+            self, db_engine, auth_logic, api_secret_key,
+            email, password
+    ):
+        # create record
+        db_engine.auth.register_simple_auth(email, password)
+        #
+        token_1 = auth_logic.signin({
+            'secret': api_secret_key,
+            'type': 'simple',
+            'email': email,
+            'password': password,
+        })
+        token_2 = auth_logic.signin({
+            'secret': api_secret_key,
+            'type': 'simple',
+            'email': email,
+            'password': password,
+        })
+        assert len(token_1) == sfcd.misc.Crypto.auth_token_length
+        assert token_1 == token_2
 
     def test__signin__facebook(
             self, db_engine, auth_logic, api_secret_key,
             email, facebook_id, facebook_token
     ):
         # create record
-        db_engine.auth.add_facebook_auth(email, facebook_id, facebook_token)
+        db_engine.auth.register_facebook_auth(
+            email, facebook_id, facebook_token)
         #
-        assert auth_logic.signin({
+        token = auth_logic.signin({
             'secret': api_secret_key,
             'type': 'facebook',
             'email': email,
             'facebook_id': facebook_id,
             'facebook_token': facebook_token,
-        }) is None
+        })
+        #
+        token_db = db_engine.auth.get_token_facebook_auth(
+            email, facebook_id, facebook_token)
+        #
+        assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert token == token_db
+
+    def test__signin__facebook__equal_tokens(
+            self, db_engine, auth_logic, api_secret_key,
+            email, facebook_id, facebook_token
+    ):
+        # create record
+        db_engine.auth.register_facebook_auth(
+            email, facebook_id, facebook_token)
+        #
+        token_1 = auth_logic.signin({
+            'secret': api_secret_key,
+            'type': 'facebook',
+            'email': email,
+            'facebook_id': facebook_id,
+            'facebook_token': facebook_token,
+        })
+        token_2 = auth_logic.signin({
+            'secret': api_secret_key,
+            'type': 'facebook',
+            'email': email,
+            'facebook_id': facebook_id,
+            'facebook_token': facebook_token,
+        })
+        assert len(token_1) == sfcd.misc.Crypto.auth_token_length
+        assert token_1 == token_2
 
     def test__signup_signin__simple(
             self, auth_logic, api_secret_key,
@@ -358,13 +419,13 @@ class TestAuthLogic:
             'email': email,
             'password': password,
         }) is None
-        # signin
+        # signin - some token
         assert auth_logic.signin({
             'secret': api_secret_key,
             'type': 'simple',
             'email': email,
             'password': password,
-        }) is None
+        })
 
     def test__signup_signin__facebook(
         self, db_engine, auth_logic, api_secret_key,
@@ -378,11 +439,11 @@ class TestAuthLogic:
             'facebook_id': facebook_id,
             'facebook_token': facebook_token,
         }) is None
-        # signin
+        # signin - some token
         assert auth_logic.signin({
             'secret': api_secret_key,
             'type': 'facebook',
             'email': email,
             'facebook_id': facebook_id,
             'facebook_token': facebook_token,
-        }) is None
+        })

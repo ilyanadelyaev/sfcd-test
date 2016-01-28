@@ -10,6 +10,8 @@ class Crypto(object):
     hashed_length = 128
     salt_lenght = 32
 
+    auth_token_length = 64
+
     @staticmethod
     def hash_passphrase(passphrase):
         """
@@ -24,3 +26,7 @@ class Crypto(object):
         Validate user passphrase with stored hashed value and salt
         """
         return hashlib.sha512(passphrase + salt).hexdigest() == hashed
+
+    @staticmethod
+    def generate_auth_token():
+        return uuid.uuid4().hex + uuid.uuid4().hex
