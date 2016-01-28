@@ -8,7 +8,7 @@ import sfcd.config
 import sfcd.logic
 
 
-blueprint = flask.Blueprint('auth', __name__)
+blueprint = flask.Blueprint('auth', __name__, url_prefix='/auth')
 
 
 def register_view(web_view):
@@ -18,7 +18,7 @@ def register_view(web_view):
     web_view.register_blueprint(blueprint)
 
 
-@blueprint.route('/auth/signup/', methods=['POST'])
+@blueprint.route('/signup/', methods=['POST'])
 def auth_signup():
     """
     POST json request handler
@@ -61,7 +61,7 @@ def auth_signup():
     return flask.jsonify(resp_data), resp_code
 
 
-@blueprint.route('/auth/signin/', methods=['POST'])
+@blueprint.route('/signin/', methods=['POST'])
 def auth_signin():
     """
     POST json request handler
