@@ -7,7 +7,7 @@ Using:
 * SQLAlchemy
 
 Realize POST "/auto/signin" and "/auth/signup" methods for simple auth.
-Additionally auth via Facebook, Twitter and Instagram.
+Additionally auth via Facebook.
 
 ## Init
 ```
