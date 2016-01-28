@@ -117,9 +117,8 @@ class TestAuth:
             },
         )
         assert resp.status_code == 200
-        # check for auth
-        assert db_engine.auth.check_simple_auth(
-            email, password)
+        # check for auth - not raises
+        db_engine.auth.check_simple_auth(email, password)
 
     def test__signup__simple__invalid_password(
             self, web_app, api_secret_key, email
@@ -152,8 +151,8 @@ class TestAuth:
             },
         )
         assert resp.status_code == 200
-        # check for auth
-        assert db_engine.auth.check_facebook_auth(
+        # check for auth - not raises
+        db_engine.auth.check_facebook_auth(
             email, facebook_id, facebook_token)
 
     def test__signup__facebook__facebook_id_exitsts(
@@ -274,7 +273,7 @@ class TestAuth:
         )
         assert resp.status_code == 400
         assert resp.json['error'] == \
-            'Login error with: "email "{}" not registred"'.format(email)
+            'Login error with: "email "{}" not exists"'.format(email)
 
     def test__signin__simple(
             self, db_engine, web_app, api_secret_key,
@@ -358,4 +357,4 @@ class TestAuth:
         )
         assert resp.status_code == 400
         assert resp.json['error'] == \
-            'Login error with: "invalid login data"'
+            'Login error with: "invalid passphrase"'

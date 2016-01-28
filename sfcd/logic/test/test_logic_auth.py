@@ -226,9 +226,10 @@ class TestAuthLogic:
                 'secret': api_secret_key,
                 'type': 'simple',
                 'email': email,
+                'password': '',
             })
         assert ex_info.value.message == \
-            'Login error with: "email "{}" not registred"'.format(email)
+            'Login error with: "email "{}" not exists"'.format(email)
 
     def test__signin__ivalid_auth_type(
             self, db_engine, auth_logic, api_secret_key,

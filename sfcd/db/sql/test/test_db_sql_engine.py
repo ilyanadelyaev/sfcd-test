@@ -22,8 +22,6 @@ class TestDBEngine:
         #
         assert self._check_method_exists(
             db_engine.auth.__class__, 'email_exists')
-        assert self._check_method_exists(
-            db_engine.auth.__class__, 'facebook_id_exists')
         #
         assert self._check_method_exists(
             db_engine.auth.__class__, 'add_simple_auth')

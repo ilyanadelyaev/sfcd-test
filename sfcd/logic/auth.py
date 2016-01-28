@@ -1,5 +1,6 @@
 import validate_email  # external package
 
+import sfcd.db.exc
 import sfcd.config
 
 
@@ -127,15 +128,16 @@ class AuthLogic(object):
         if self.db_engine.auth.email_exists(email):
             raise RegistrationError('email "{}" exists'.format(email))
 
-        if auth_type == 'simple':
-            self._simple_signup(data)
-        elif auth_type == 'facebook':
-            self._facebook_signup(data)
+        try:
+            if auth_type == 'simple':
+                self._simple_signup(data)
+            elif auth_type == 'facebook':
+                self._facebook_signup(data)
 
-        # add more auth methods here
+            # add more auth methods here
 
-        else:
-            raise InvalidAuthType(auth_type)
+        except sfcd.db.exc.AuthError as ex:
+            raise RegistrationError(ex.message)
 
     def _simple_signup(self, data):
         email = data.get('email', None)
@@ -151,10 +153,6 @@ class AuthLogic(object):
         facebook_token = data.get('facebook_token', None)
         # check params
         self._validate_facebook(facebook_id, facebook_token)
-        # check if facebook_id exists
-        if self.db_engine.auth.facebook_id_exists(facebook_id):
-            raise RegistrationError(
-                'facebook_id "{}" exists'.format(facebook_id))
         # add record to db
         self.db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
@@ -182,29 +180,24 @@ class AuthLogic(object):
         if auth_type not in sfcd.config.AUTH_METHODS:
             raise InvalidAuthType(auth_type)
 
-        # check if auth record exists
-        if not self.db_engine.auth.email_exists(email):
-            raise LoginError('email "{}" not registred'.format(email))
+        try:
+            if auth_type == 'simple':
+                self._simple_signin(data)
+            elif auth_type == 'facebook':
+                self._facebook_signin(data)
 
-        if auth_type == 'simple':
-            self._simple_signin(data)
-        elif auth_type == 'facebook':
-            self._facebook_signin(data)
+            # add more auth methods here
 
-        # add more auth methods here
-
-        else:
-            raise InvalidAuthType(auth_type)
+        except sfcd.db.exc.AuthError as ex:
+            raise LoginError(ex.message)
 
     def _simple_signin(self, data):
         email = data.get('email', None)
         password = data.get('password', None)
         # check params
         self._validate_simple(password)
-        #
-        if not self.db_engine.auth.check_simple_auth(
-                email, password):
-            raise LoginError('invalid password')
+        # check db
+        self.db_engine.auth.check_simple_auth(email, password)
 
     def _facebook_signin(self, data):
         email = data.get('email', None)
@@ -212,7 +205,6 @@ class AuthLogic(object):
         facebook_token = data.get('facebook_token', None)
         # check params
         self._validate_facebook(facebook_id, facebook_token)
-        #
-        if not self.db_engine.auth.check_facebook_auth(
-                email, facebook_id, facebook_token):
-            raise LoginError('invalid login data')
+        # check db
+        self.db_engine.auth.check_facebook_auth(
+            email, facebook_id, facebook_token)
