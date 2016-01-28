@@ -3,6 +3,9 @@ import sqlalchemy.orm
 
 import sfcd.db.sql.base
 
+# register managers here to ensure tables
+from . import auth
+
 
 class DBEngine(object):
     """
@@ -36,12 +39,9 @@ class DBEngine(object):
     def auth(self):
         """
         auth manager lazy
-        create tables for models on lazy way
         """
         # pylint: disable=E0203
         # because magic
         if not hasattr(self, '_auth') or self._auth is None:
-            from . import auth  # avoid circular import
-            sfcd.db.sql.base.BaseModel.metadata.create_all(self.engine)
             self._auth = auth.AuthManager(self.session_maker)
         return self._auth

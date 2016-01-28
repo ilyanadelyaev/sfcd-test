@@ -4,8 +4,8 @@ import logging.handlers
 import flask
 
 import sfcd.db.sql.engine
-import sfcd.logic
-import sfcd.views
+import sfcd.logic.controller
+import sfcd.views.registry
 import sfcd.config
 
 
@@ -29,11 +29,11 @@ class Application(object):
             pass
 
         # controller
-        self.controller = sfcd.logic.Controller(self.db_engine)
+        self.controller = sfcd.logic.controller.Controller(self.db_engine)
 
         # view
         self.web_view = flask.Flask(__name__)
-        sfcd.views.register_views(self.web_view)
+        sfcd.views.registry.register_views(self.web_view)
 
         # logging
         self.setup_logging()
