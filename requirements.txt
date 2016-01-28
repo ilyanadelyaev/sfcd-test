@@ -6,4 +6,3 @@ pytest==2.8.7
 Flask-WebTest==0.0.7
 pylint==1.5.4
 pep8==1.7.0
-ipdb

@@ -11,6 +11,7 @@ Additionally auth via Facebook, Twitter and Instagram.
 
 ## Init
 ```
+[sudo] pip install virtualenv
 ./init.sh
 source venv/bin/activate
 ```
