@@ -1,4 +1,3 @@
-import json
 import logging
 
 import flask
@@ -26,15 +25,12 @@ def auth_signup():
     POST json request handler
     register user in system
     """
-    request = flask.request
-    request_data = json.loads(request.data)
-
     resp_data = {}
     resp_code = 200
 
     try:
         # call logic.auth.signup via logic.controller
-        flask.g.controller.auth.signup(request_data)
+        flask.g.controller.auth.signup(flask.request.json)
     except sfcd.logic.auth.AuthError as ex:
         logger.exception(ex)
         resp_data = {'error': str(ex)}
@@ -53,15 +49,12 @@ def auth_signin():
     POST json request handler
     check user auth in system
     """
-    request = flask.request
-    request_data = json.loads(request.data)
-
     resp_data = {}
     resp_code = 200
 
     try:
         # call logic.auth.signin via logic.controller
-        token = flask.g.controller.auth.signin(request_data)
+        token = flask.g.controller.auth.signin(flask.request.json)
         resp_data = {'auth_token': token}
     except sfcd.logic.auth.AuthError as ex:
         logger.exception(ex)
