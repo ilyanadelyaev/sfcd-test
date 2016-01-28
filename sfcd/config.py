@@ -15,6 +15,14 @@ MONGO_DB_URL = None
 AUTH_METHODS = ('simple', 'facebook')
 
 
+# Log
+
+LOG_LEVEL = 'DEBUG'
+LOG_FILENAME__SYSTEM = './logs/system.log'
+LOG_FILENAME__SQL = './logs/sql.log'
+LOG_FILENAME__VIEW = './logs/view.log'
+
+
 # Flask
 
 FLASK_HOST = 'localhost'
