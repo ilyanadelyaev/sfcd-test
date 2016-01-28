@@ -18,7 +18,7 @@ def auth_manager(session_maker):
 
 
 ########################################
-# test models
+# models tests
 ########################################
 
 class TestModels:
@@ -47,7 +47,7 @@ class TestModels:
         """
         test simple auth creation
         """
-        hashed, salt = sfcd.misc.hash_password(password)
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
@@ -65,7 +65,7 @@ class TestModels:
         """
         test rollback for auth records
         """
-        hashed, salt = sfcd.misc.hash_password(password)
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
@@ -83,7 +83,7 @@ class TestModels:
         """
         test simple auth creation with same auth.id
         """
-        hashed, salt = sfcd.misc.hash_password(password)
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
@@ -98,13 +98,16 @@ class TestModels:
         """
         test facebook auth creation
         """
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
             auth_id=i.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         session.add(f)
         session.commit()
@@ -112,7 +115,8 @@ class TestModels:
             sfcd.db.sql.auth.ID).filter(
                 sfcd.db.sql.auth.ID.email == email).one()
         assert f.facebook_id == facebook_id
-        assert f.facebook_token == facebook_token
+        assert f.hashed == hashed
+        assert f.salt == salt
 
     def test__facebook__same_id(
             self, session, email, facebook_id, facebook_id_2, facebook_token
@@ -120,18 +124,22 @@ class TestModels:
         """
         test facebook auth creation with same auth.id
         """
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
         f_1 = sfcd.db.sql.auth.Facebook(
             auth_id=i.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         f_2 = sfcd.db.sql.auth.Facebook(
             auth_id=i.id,
             facebook_id=facebook_id_2,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         session.add_all([f_1, f_2])
         with pytest.raises(sqlalchemy.exc.IntegrityError):
@@ -143,6 +151,8 @@ class TestModels:
         """
         test facebook auth creation with same facebook_id
         """
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        #
         i_1 = sfcd.db.sql.auth.ID(email=email)
         i_2 = sfcd.db.sql.auth.ID(email=email_2)
         session.add_all([i_1, i_2])
@@ -150,12 +160,14 @@ class TestModels:
         f_1 = sfcd.db.sql.auth.Facebook(
             auth_id=i_1.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         f_2 = sfcd.db.sql.auth.Facebook(
             auth_id=i_2.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         session.add_all([f_1, f_2])
         with pytest.raises(sqlalchemy.exc.IntegrityError):
@@ -163,11 +175,11 @@ class TestModels:
 
 
 ########################################
-# test manager
+# manager tests
 ########################################
 
 class TestManager:
-    def test__auth_exists(self, session, auth_manager, email):
+    def test__email_exists(self, session, auth_manager, email):
         """
         check if auth exists in system
         """
@@ -175,13 +187,35 @@ class TestManager:
         session.add(i)
         session.commit()
         #
-        assert auth_manager.auth_exists(email)
+        assert auth_manager.email_exists(email)
 
-    def test__auth_exists__not(self, auth_manager, email):
+    def test__email_exists__not(self, auth_manager, email):
         """
-        check if auth not exists
+        check if email not exists
         """
-        assert not auth_manager.auth_exists(email)
+        assert not auth_manager.email_exists(email)
+
+    def test__facebook_id_exists(
+            self, session, auth_manager, email, facebook_id
+    ):
+        """
+        check if facebook_id exists in system
+        """
+        i = sfcd.db.sql.auth.ID(email=email)
+        session.add(i)
+        session.flush()
+        f = sfcd.db.sql.auth.Facebook(
+            auth_id=i.id, facebook_id=facebook_id)
+        session.add(f)
+        session.commit()
+        #
+        assert auth_manager.facebook_id_exists(facebook_id)
+
+    def test__facebook_id_exists__not(self, auth_manager, facebook_id):
+        """
+        check if facebook_id not exists
+        """
+        assert not auth_manager.facebook_id_exists(facebook_id)
 
     def test__add_simple_auth(self, session, auth_manager, email, password):
         """
@@ -189,17 +223,15 @@ class TestManager:
         """
         auth_manager.add_simple_auth(email, password)
         #
-        hashed, salt = sfcd.misc.hash_password(password)
-        #
-        q = session.query(
+        obj = session.query(
             sfcd.db.sql.auth.Simple).join(sfcd.db.sql.auth.ID).filter(
                 sqlalchemy.sql.expression.and_(
                     sfcd.db.sql.auth.ID.email == email,
-                    sfcd.db.sql.auth.Simple.hashed == hashed,
-                    sfcd.db.sql.auth.Simple.salt == salt,
                 )
-            )
-        return bool(session.query(q.exists()).scalar())
+            ).first()
+        assert obj
+        assert sfcd.misc.Crypto.validate_passphrase(
+            password, obj.hashed, obj.salt)
 
     def test__add_simple_auth__empty_email(self, auth_manager, password):
         """
@@ -214,7 +246,7 @@ class TestManager:
         """
         test if simple auth exists
         """
-        hashed, salt = sfcd.misc.hash_password(password)
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
@@ -230,7 +262,7 @@ class TestManager:
         """
         test if simple auth not exists
         """
-        hashed, salt = sfcd.misc.hash_password(password)
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
@@ -250,15 +282,16 @@ class TestManager:
         """
         auth_manager.add_facebook_auth(email, facebook_id, facebook_token)
         #
-        q = session.query(
+        obj = session.query(
             sfcd.db.sql.auth.Facebook).join(sfcd.db.sql.auth.ID).filter(
                 sqlalchemy.sql.expression.and_(
                     sfcd.db.sql.auth.ID.email == email,
                     sfcd.db.sql.auth.Facebook.facebook_id == facebook_id,
-                    sfcd.db.sql.auth.Facebook.facebook_token == facebook_token,
                 )
-        )
-        assert session.query(q.exists()).scalar()
+            ).first()
+        assert obj
+        assert sfcd.misc.Crypto.validate_passphrase(
+            facebook_token, obj.hashed, obj.salt)
 
     def test__add_facebook_auth__empty_facebook_id(
             self, session, auth_manager, email, facebook_token):
@@ -274,13 +307,16 @@ class TestManager:
             self, session, auth_manager, email, facebook_id, facebook_token):
         """
         """
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
             auth_id=i.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         session.add(f)
         session.commit()
@@ -292,13 +328,16 @@ class TestManager:
             self, session, auth_manager, email, facebook_id, facebook_token):
         """
         """
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        #
         i = sfcd.db.sql.auth.ID(email=email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
             auth_id=i.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         session.add(f)
         session.commit()

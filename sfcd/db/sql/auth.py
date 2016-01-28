@@ -12,18 +12,25 @@ import sfcd.db.sql
 
 class ID(sfcd.db.sql.BaseModel):
     """
-    "id" is system wide auth_id
-    "email" must be unique
+    :id: is system wide auth_id
+    :email: must be unique
     """
     __tablename__ = 'auth_id'
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    email = sqlalchemy.Column(sqlalchemy.String(60), unique=True)
+    id = sqlalchemy.Column(
+        sqlalchemy.Integer,
+        primary_key=True,
+    )
+    email = sqlalchemy.Column(
+        sqlalchemy.String(60),
+        unique=True,
+        index=True,
+    )
 
 
 class Simple(sfcd.db.sql.BaseModel):
     """
-    "hashed" and "salt" instead of "password" for simple auth method
+    :hashed: and :salt: to securely store user password
     """
     __tablename__ = 'auth_simple'
 
@@ -32,16 +39,18 @@ class Simple(sfcd.db.sql.BaseModel):
         sqlalchemy.ForeignKey('auth_id.id'),
         primary_key=True,  # hack
     )
-    # hashlib.sha512.hexdigest
-    hashed = sqlalchemy.Column(sqlalchemy.String(128))
-    # uuid4.hex
-    salt = sqlalchemy.Column(sqlalchemy.String(32))
+    hashed = sqlalchemy.Column(
+        sqlalchemy.String(sfcd.misc.Crypto.hashed_length)
+    )
+    salt = sqlalchemy.Column(
+        sqlalchemy.String(sfcd.misc.Crypto.salt_lenght)
+    )
 
 
 class Facebook(sfcd.db.sql.BaseModel):
     """
-    "facebook_id" and "facebook_token" for auth via facebook
-    facebook_id is unuque
+    :facebook_id: unique facebook user identifier
+    :hashed: and :salt: to securely store facebook_token
     """
     __tablename__ = 'auth_facebook'
 
@@ -50,8 +59,17 @@ class Facebook(sfcd.db.sql.BaseModel):
         sqlalchemy.ForeignKey('auth_id.id'),
         primary_key=True,  # hack
     )
-    facebook_id = sqlalchemy.Column(sqlalchemy.String(120), unique=True)
-    facebook_token = sqlalchemy.Column(sqlalchemy.String)
+    facebook_id = sqlalchemy.Column(
+        sqlalchemy.String(120),
+        unique=True,
+        index=True,
+    )
+    hashed = sqlalchemy.Column(
+        sqlalchemy.String(sfcd.misc.Crypto.hashed_length)
+    )
+    salt = sqlalchemy.Column(
+        sqlalchemy.String(sfcd.misc.Crypto.salt_lenght)
+    )
 
 
 ########################################
@@ -59,15 +77,26 @@ class Facebook(sfcd.db.sql.BaseModel):
 ########################################
 
 class AuthManager(sfcd.db.sql.ManagerBase):
-    def auth_exists(self, email):
+    def email_exists(self, email):
         """
-        check if auth exists in system
+        check if email exists in system
         """
         session = self.get_session()
         #
         return bool(
             session.query(sqlalchemy.sql.exists().where(
                 ID.email == email)).scalar()
+        )
+
+    def facebook_id_exists(self, facebook_id):
+        """
+        check if facebook_id exists in system
+        """
+        session = self.get_session()
+        #
+        return bool(
+            session.query(sqlalchemy.sql.exists().where(
+                Facebook.facebook_id == facebook_id)).scalar()
         )
 
     def add_simple_auth(self, email, password):
@@ -79,12 +108,16 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         session = self.get_session()
         #
-        hashed, salt = sfcd.misc.hash_password(password)
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         i = ID(email=email)
         session.add(i)
         session.flush()
-        p = Simple(auth_id=i.id, hashed=hashed, salt=salt)
+        p = Simple(
+            auth_id=i.id,
+            hashed=hashed,
+            salt=salt,
+        )
         session.add(p)
         session.commit()
 
@@ -95,20 +128,26 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         session = self.get_session()
         #
-        p = session.query(Simple).join(ID).filter(ID.email == email).first()
-        if not p:
+        obj = session.query(Simple).join(ID).filter(
+            ID.email == email).first()
+        if not obj:
             return False
         #
-        return sfcd.misc.validate_password_hash(password, p.hashed, p.salt)
+        return sfcd.misc.Crypto.validate_passphrase(
+            password, obj.hashed, obj.salt)
 
     def add_facebook_auth(self, email, facebook_id, facebook_token):
         """
         add facebook auth record
         """
+        if not email:
+            raise AttributeError('Empty email param')
         if not facebook_id:
             raise AttributeError('Empty facebook_id param')
         #
         session = self.get_session()
+        #
+        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #
         i = ID(email=email)
         session.add(i)
@@ -116,7 +155,8 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         f = Facebook(
             auth_id=i.id,
             facebook_id=facebook_id,
-            facebook_token=facebook_token,
+            hashed=hashed,
+            salt=salt,
         )
         session.add(f)
         session.commit()
@@ -128,11 +168,13 @@ class AuthManager(sfcd.db.sql.ManagerBase):
         #
         session = self.get_session()
         #
-        q = session.query(Facebook).join(ID).filter(
+        obj = session.query(Facebook).join(ID).filter(
             sqlalchemy.sql.expression.and_(
                 ID.email == email,
                 Facebook.facebook_id == facebook_id,
-                Facebook.facebook_token == facebook_token,
-            )
-        )
-        return bool(session.query(q.exists()).scalar())
+            )).first()
+        if not obj:
+            return False
+        #
+        return sfcd.misc.Crypto.validate_passphrase(
+            facebook_token, obj.hashed, obj.salt)
