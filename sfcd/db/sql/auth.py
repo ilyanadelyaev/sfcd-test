@@ -3,14 +3,14 @@ import sqlalchemy.sql
 import sqlalchemy.sql.expression
 
 import sfcd.misc
-import sfcd.db.sql
+import sfcd.db.sql.base
 
 
 ########################################
 # Models
 ########################################
 
-class ID(sfcd.db.sql.BaseModel):
+class ID(sfcd.db.sql.base.BaseModel):
     """
     :id: is system wide auth_id
     :email: must be unique
@@ -28,7 +28,7 @@ class ID(sfcd.db.sql.BaseModel):
     )
 
 
-class Simple(sfcd.db.sql.BaseModel):
+class Simple(sfcd.db.sql.base.BaseModel):
     """
     :hashed: and :salt: to securely store user password
     """
@@ -47,7 +47,7 @@ class Simple(sfcd.db.sql.BaseModel):
     )
 
 
-class Facebook(sfcd.db.sql.BaseModel):
+class Facebook(sfcd.db.sql.base.BaseModel):
     """
     :facebook_id: unique facebook user identifier
     :hashed: and :salt: to securely store facebook_token
@@ -76,7 +76,7 @@ class Facebook(sfcd.db.sql.BaseModel):
 # Manager
 ########################################
 
-class AuthManager(sfcd.db.sql.ManagerBase):
+class AuthManager(sfcd.db.sql.base.ManagerBase):
     def email_exists(self, email):
         """
         check if email exists in system

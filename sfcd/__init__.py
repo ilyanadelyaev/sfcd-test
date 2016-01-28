@@ -3,7 +3,7 @@ import logging.handlers
 
 import flask
 
-import sfcd.db.sql
+import sfcd.db.sql.engine
 import sfcd.logic
 import sfcd.views
 import sfcd.config
@@ -23,7 +23,7 @@ class Application(object):
         # db engine
         self.db_engine = None
         if db_type == 'sql':
-            self.db_engine = sfcd.db.sql.DBEngine(db_url)
+            self.db_engine = sfcd.db.sql.engine.DBEngine(db_url)
         elif db_type == 'mongo':
             # self.db_engine = sfcd.db.mongo.DBEngine(db_url)
             pass
