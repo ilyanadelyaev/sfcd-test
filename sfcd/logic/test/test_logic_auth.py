@@ -135,24 +135,46 @@ class TestAuthLogic:
             })
             assert ex.value == ('facebook_id', None)
 
+    def test__signup__facebook__facebook_id_exitsts(
+            self, auth_logic, api_secret_key,
+            email, email_2, facebook_id, facebook_token
+    ):
+        auth_logic.signup({
+            'secret': api_secret_key,
+            'type': 'facebook',
+            'email': email,
+            'facebook_id': facebook_id,
+            'facebook_token': facebook_token,
+        })
+        #
+        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex:
+            auth_logic.signup({
+                'secret': api_secret_key,
+                'type': 'facebook',
+                'email': email_2,
+                'facebook_id': facebook_id,
+                'facebook_token': facebook_token,
+            })
+            assert ex.value == 'facebook_id "{}" exists'.format(facebook_id)
+
     def test__signup__already_exists(
             self, db_engine, auth_logic, api_secret_key, email, password
     ):
         db_engine.auth.add_simple_auth(email, password)
         #
-        with pytest.raises(sfcd.logic.auth.AlreadyRegistered) as ex:
+        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex:
             auth_logic.signup({
                 'secret': api_secret_key,
                 'type': 'simple',
                 'email': email,
                 'password': password,
             })
-            assert ex.value == email
+            assert ex.value == 'email "{}" exists'.format(email)
 
     def test__signup__simple(
             self, db_engine, auth_logic, api_secret_key, email, password
     ):
-        assert not db_engine.auth.auth_exists(email)
+        assert not db_engine.auth.email_exists(email)
         #
         auth_logic.signup({
             'secret': api_secret_key,
@@ -161,13 +183,13 @@ class TestAuthLogic:
             'password': password,
         })
         #
-        assert db_engine.auth.auth_exists(email)
+        assert db_engine.auth.email_exists(email)
 
     def test__signup__facebook(
             self, db_engine, auth_logic, api_secret_key,
             email, facebook_id, facebook_token
     ):
-        assert not db_engine.auth.auth_exists(email)
+        assert not db_engine.auth.email_exists(email)
         #
         auth_logic.signup({
             'secret': api_secret_key,
@@ -177,7 +199,7 @@ class TestAuthLogic:
             'facebook_token': facebook_token,
         })
         #
-        assert db_engine.auth.auth_exists(email)
+        assert db_engine.auth.email_exists(email)
 
     def test__signin__not_exists(self, auth_logic, api_secret_key, email):
         with pytest.raises(sfcd.logic.auth.LoginError):

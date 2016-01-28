@@ -6,7 +6,9 @@ import sfcd.config
 class AuthError(Exception):
     """
     Common auth error
+    :value: = error text
     """
+
     def __init__(self, value):
         self.value = value
 
@@ -17,7 +19,7 @@ class AuthError(Exception):
 class InvalidSecretKey(AuthError):
     """
     Secret key invalid or not specified
-    value = secret_key
+    :value: = secret_key
     """
 
     def __str__(self):
@@ -27,7 +29,7 @@ class InvalidSecretKey(AuthError):
 class InvalidAuthType(AuthError):
     """
     auth type not supported
-    value = auth_type
+    :value: = auth_type
     """
 
     def __str__(self):
@@ -37,30 +39,31 @@ class InvalidAuthType(AuthError):
 class InvalidArgument(AuthError):
     """
     auth argument not valid
-    value = (arg_name, arg_value)
+    :value: = (arg_name, arg_value)
     """
+
+    def __init__(self, tp, vl):
+        self.value = (tp, vl)
 
     def __str__(self):
         return 'Ivalid argument {} = "{}"'.format(
             self.value[0], self.value[1])
 
 
-class AlreadyRegistered(AuthError):
+class RegistrationError(AuthError):
     """
-    Cannot signup
-    Specified email already registered
-    value = email
+    Registration error
+    :value: = error text
     """
 
     def __str__(self):
-        return 'Email "{}" already registered'.format(self.value)
+        return 'Registration error with: "{}"'.format(self.value)
 
 
 class LoginError(AuthError):
     """
-    Error via logging procedure
-    value = error_text_tepmplate
-    args = teplate_params
+    Login error
+    :value: = error text
     """
 
     def __str__(self):
@@ -92,24 +95,26 @@ class AuthLogic(object):
 
     @staticmethod
     def _validate_email(email):
+        if email is None:
+            raise InvalidArgument('email', email)
         # validate via extended package "validate-email"
         if not validate_email.validate_email(email):
-            raise InvalidArgument(('email', email))
+            raise InvalidArgument('email', email)
 
     @staticmethod
     def _validate_simple(password):
         # ? check size
         if password is None:
-            raise InvalidArgument(('password', password))
+            raise InvalidArgument('password', password)
 
     @staticmethod
     def _validate_facebook(facebook_id, facebook_token):
         # not empty
         if not facebook_id:
-            raise InvalidArgument(('facebook_id', facebook_id))
+            raise InvalidArgument('facebook_id', facebook_id)
         # not empty
         if not facebook_token:
-            raise InvalidArgument(('facebook_token', facebook_token))
+            raise InvalidArgument('facebook_token', facebook_token)
 
     def signup(self, data):
         """
@@ -134,9 +139,9 @@ class AuthLogic(object):
         if auth_type not in sfcd.config.AUTH_METHODS:
             raise InvalidAuthType(auth_type)
 
-        # check if auth record exists
-        if self.db_engine.auth.auth_exists(email):
-            raise AlreadyRegistered(email)
+        # check if email exists
+        if self.db_engine.auth.email_exists(email):
+            raise RegistrationError('email "{}" exists'.format(email))
 
         if auth_type == 'simple':
             self._simple_signup(data)
@@ -162,6 +167,10 @@ class AuthLogic(object):
         facebook_token = data.get('facebook_token', None)
         # check params
         self._validate_facebook(facebook_id, facebook_token)
+        # check if facebook_id exists
+        if self.db_engine.auth.facebook_id_exists(facebook_id):
+            raise RegistrationError(
+                'facebook_id "{}" exists'.format(facebook_id))
         # add record to db
         self.db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
@@ -190,7 +199,7 @@ class AuthLogic(object):
             raise InvalidAuthType(auth_type)
 
         # check if auth record exists
-        if not self.db_engine.auth.auth_exists(email):
+        if not self.db_engine.auth.email_exists(email):
             raise LoginError('email "{}" not registred'.format(email))
 
         if auth_type == 'simple':
