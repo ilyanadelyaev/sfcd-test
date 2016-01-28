@@ -11,16 +11,22 @@ import sfcd.config
 
 class Application(object):
     """
-    App initialization namespace
+    System initialization methods
     """
 
     @classmethod
     def setup_application(cls, db_type, db_url):
         """
-        - Initialize flask app
-        - Initialize database engine and store it to flask's app.g
-        - Initialize logic controller. Depends on flask_app.g.db_engine
+        - Initialize database engine
+          based on config settings
+        - Initialize logic controller
+        - Initialize flask app and register views
+        - Set @app.before_request and @app.after_request
+          send controller to each request via flask.g
         - Setup logging
+
+        return :flask_app:, :db_engine:
+        use :db_engine: only for test needs
         """
         # database engine
         if db_type == 'sql':

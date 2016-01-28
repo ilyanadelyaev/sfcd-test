@@ -1,3 +1,7 @@
+## make "real" requests for application via curl
+
+host='localhost'
+port='8080'
 secret_key='f556bae6-abd5-42b3-b5d4-e4e340f811c7'
 
 simple_email=$(uuidgen)'@me.me'
@@ -37,7 +41,7 @@ do
         -X POST \
         -d "$i" \
         --write-out ' st: %{http_code}\n' \
-        http://localhost:8080/auth/signup/
+        http://$host:$port/auth/signup/
 done
 
 
@@ -69,5 +73,5 @@ do
         -X POST \
         -d "$i" \
         --write-out ' st: %{http_code}\n' \
-        http://localhost:8080/auth/signin/
+        http://$host:$port/auth/signin/
 done

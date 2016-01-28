@@ -137,6 +137,7 @@ class AuthLogic(object):
             # add more auth methods here
 
         except sfcd.db.exc.AuthError as ex:
+            # hide db exception here for human-readable
             raise RegistrationError(ex.message)
 
     def _simple_signup(self, data):
@@ -189,6 +190,7 @@ class AuthLogic(object):
             # add more auth methods here
 
         except sfcd.db.exc.AuthError as ex:
+            # hide db exception here for human-readable
             raise LoginError(ex.message)
 
     def _simple_signin(self, data):

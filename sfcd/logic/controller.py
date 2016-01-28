@@ -2,6 +2,11 @@ from . import auth
 
 
 class Controller(object):
+    """
+    Keep all logic managers here
+    Using in requests via flask.g
+    """
+
     def __init__(self, db_engine):
         self.db_engine = db_engine
 
