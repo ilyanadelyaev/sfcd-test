@@ -6,48 +6,36 @@ import sfcd.config
 class AuthError(Exception):
     """
     Common auth error
-    :value: = error text
     """
+    message_template = 'Unknown auth error with: "{v}"'
 
     def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return 'Unknown auth error with: "{}"'.format(self.value)
+        super(AuthError, self).__init__(
+            self.message_template.format(v=value))
 
 
 class InvalidSecretKey(AuthError):
     """
     Secret key invalid or not specified
-    :value: = secret_key
     """
-
-    def __str__(self):
-        return 'Invalid secret key: "{}"'.format(self.value)
+    message_template = 'Invalid secret key: "{v}"'
 
 
 class InvalidAuthType(AuthError):
     """
     auth type not supported
-    :value: = auth_type
     """
-
-    def __str__(self):
-        return 'Invalid auth type: "{}"'.format(self.value)
+    message_template = 'Invalid auth type: "{v}"'
 
 
 class InvalidArgument(AuthError):
     """
     auth argument not valid
-    :value: = (arg_name, arg_value)
     """
+    message_template = 'Ivalid argument {v[0]} = "{v[1]}"'
 
     def __init__(self, tp, vl):
-        self.value = (tp, vl)
-
-    def __str__(self):
-        return 'Ivalid argument {} = "{}"'.format(
-            self.value[0], self.value[1])
+        super(InvalidArgument, self).__init__((tp, vl))
 
 
 class RegistrationError(AuthError):
@@ -55,9 +43,7 @@ class RegistrationError(AuthError):
     Registration error
     :value: = error text
     """
-
-    def __str__(self):
-        return 'Registration error with: "{}"'.format(self.value)
+    message_template = 'Registration error with: "{v}"'
 
 
 class LoginError(AuthError):
@@ -65,9 +51,7 @@ class LoginError(AuthError):
     Login error
     :value: = error text
     """
-
-    def __str__(self):
-        return 'Login error with: "{}"'.format(self.value)
+    message_template = 'Login error with: "{v}"'
 
 
 class AuthLogic(object):
