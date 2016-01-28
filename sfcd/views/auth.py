@@ -1,7 +1,9 @@
+import uuid
 import json
 
 import flask
 
+import sfcd
 import sfcd.config
 import sfcd.logic
 
@@ -23,20 +25,38 @@ def auth_signup():
     register user in system
     """
     request = flask.request  # hack
+
+    request_id = str(uuid.uuid4())
     request_data = json.loads(request.data)
 
+    sfcd.application.web_view.logger.info(
+        '[%s] %s -> %s %s %s',
+        request_id,
+        request.remote_addr,
+        request.path, request.method,
+        request_data,
+    )
+
     resp_data = {}
-    resp_code = 400
+    resp_code = 200
 
     try:
         # call logic.auth.signup via logic.controller
         sfcd.application.controller.auth.signup(request_data)
-        resp_data = {'status': 'signup'}
-        resp_code = 200
     except sfcd.logic.auth.AuthError as ex:
+        sfcd.application.web_view.logger.exception(ex)
         resp_data = {'error': str(ex)}
+        resp_code = 400
     except Exception as ex:
-        resp_data = {'error': str(ex)}
+        sfcd.application.web_view.logger.exception(ex)
+        resp_data = {'error': 'Internal error'}
+        resp_code = 400
+
+    sfcd.application.web_view.logger.info(
+        '[%s] (%s) %s',
+        request_id,
+        resp_code, resp_data,
+    )
 
     return flask.jsonify(resp_data), resp_code
 
@@ -48,19 +68,37 @@ def auth_signin():
     check user auth in system
     """
     request = flask.request  # hack
+
+    request_id = str(uuid.uuid4())
     request_data = json.loads(request.data)
 
+    sfcd.application.web_view.logger.info(
+        '[%s] %s -> %s %s %s',
+        request_id,
+        request.remote_addr,
+        request.path, request.method,
+        request_data,
+    )
+
     resp_data = {}
-    resp_code = 400
+    resp_code = 200
 
     try:
         # call logic.auth.signin via logic.controller
         sfcd.application.controller.auth.signin(request_data)
-        resp_data = {'status': 'signin'}
-        resp_code = 200
     except sfcd.logic.auth.AuthError as ex:
+        sfcd.application.web_view.logger.exception(ex)
         resp_data = {'error': str(ex)}
+        resp_code = 400
     except Exception as ex:
-        resp_data = {'error': str(ex)}
+        sfcd.application.web_view.logger.exception(ex)
+        resp_data = {'error': 'Internal error'}
+        resp_code = 400
+
+    sfcd.application.web_view.logger.info(
+        '[%s] (%s) %s',
+        request_id,
+        resp_code, resp_data,
+    )
 
     return flask.jsonify(resp_data), resp_code

@@ -86,7 +86,7 @@ class TestAuth:
         )
         assert resp.status_code == 400
         assert resp.json['error'] == \
-            'Email "{}" already registered'.format(email)
+            'Registration error with: "email "{}" exists"'.format(email)
 
     def test__signup__simple(
             self, web_app, api_secret_key,
@@ -140,6 +140,30 @@ class TestAuth:
         # check for auth
         assert sfcd.application.db_engine.auth.check_facebook_auth(
             email, facebook_id, facebook_token)
+
+    def test__signup__facebook__facebook_id_exitsts(
+            self, web_app, api_secret_key,
+            email, email_2, facebook_id, facebook_token
+    ):
+        # add record to db
+        sfcd.application.db_engine.auth.add_facebook_auth(
+            email, facebook_id, facebook_token)
+        #
+        resp = web_app.post_json(
+            '/auth/signup/',
+            {
+                'secret': api_secret_key,
+                'type': 'facebook',
+                'email': email_2,
+                'facebook_id': facebook_id,
+                'facebook_token': facebook_token,
+            },
+            expect_errors=True
+        )
+        assert resp.status_code == 400
+        assert resp.json['error'] == \
+            'Registration error with: "facebook_id "{}" exists"'.format(
+                facebook_id)
 
     def test__signup__facebook__ivalid_facebook_id(
             self, web_app, api_secret_key, email
