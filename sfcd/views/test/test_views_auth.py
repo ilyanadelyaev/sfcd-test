@@ -4,21 +4,37 @@ import pytest
 
 import flask.ext.webtest
 
-import sfcd
+import sfcd.application
 
 
 @pytest.fixture(scope='session')
-def web_app(
+def app_objects(
         sql_engine_url, mongo_engine_url, option_db
 ):
+    """
+    Kind a hack to initialize web_app and db_engine separately
+    """
     db_type = option_db
     db_url = None
     if db_type == 'sql':
         db_url = sql_engine_url
     elif db_type == 'mongo':
         db_url = mongo_engine_url
-    sfcd.application = sfcd.Application(db_type, db_url)
-    return flask.ext.webtest.TestApp(sfcd.application.web_view)
+    flask_app, db_engine = \
+        sfcd.application.Application.setup_application(db_type, db_url)
+    return flask_app, db_engine
+
+
+@pytest.fixture(scope='session')
+def web_app(app_objects):
+    flask_app, _ = app_objects
+    return flask.ext.webtest.TestApp(flask_app)
+
+
+@pytest.fixture(scope='session')
+def db_engine(app_objects):
+    _, db_engine = app_objects
+    return db_engine
 
 
 class TestAuth:
@@ -67,12 +83,11 @@ class TestAuth:
             'Ivalid argument email = "invalid_email_1"'
 
     def test__signup__already_registered(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, password
     ):
         # add record to db
-        sfcd.application.db_engine.auth.add_simple_auth(
-            email, password)
+        db_engine.auth.add_simple_auth(email, password)
         #
         resp = web_app.post_json(
             '/auth/signup/',
@@ -89,7 +104,7 @@ class TestAuth:
             'Registration error with: "email "{}" exists"'.format(email)
 
     def test__signup__simple(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, password
     ):
         resp = web_app.post_json(
@@ -103,7 +118,7 @@ class TestAuth:
         )
         assert resp.status_code == 200
         # check for auth
-        assert sfcd.application.db_engine.auth.check_simple_auth(
+        assert db_engine.auth.check_simple_auth(
             email, password)
 
     def test__signup__simple__invalid_password(
@@ -123,7 +138,7 @@ class TestAuth:
             'Ivalid argument password = "None"'
 
     def test__signup__facebook(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, facebook_id, facebook_token
     ):
         resp = web_app.post_json(
@@ -138,15 +153,15 @@ class TestAuth:
         )
         assert resp.status_code == 200
         # check for auth
-        assert sfcd.application.db_engine.auth.check_facebook_auth(
+        assert db_engine.auth.check_facebook_auth(
             email, facebook_id, facebook_token)
 
     def test__signup__facebook__facebook_id_exitsts(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, email_2, facebook_id, facebook_token
     ):
         # add record to db
-        sfcd.application.db_engine.auth.add_facebook_auth(
+        db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(
@@ -262,11 +277,11 @@ class TestAuth:
             'Login error with: "email "{}" not registred"'.format(email)
 
     def test__signin__simple(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, password
     ):
         # add record to db
-        sfcd.application.db_engine.auth.add_simple_auth(
+        db_engine.auth.add_simple_auth(
             email, password)
         #
         resp = web_app.post_json(
@@ -281,11 +296,11 @@ class TestAuth:
         assert resp.status_code == 200
 
     def test__signin__simple__login_error(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, password
     ):
         # add record to db
-        sfcd.application.db_engine.auth.add_simple_auth(
+        db_engine.auth.add_simple_auth(
             email, password)
         #
         resp = web_app.post_json(
@@ -303,11 +318,11 @@ class TestAuth:
             'Login error with: "invalid password"'
 
     def test__signin__facebook(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, facebook_id, facebook_token
     ):
         # add record to db
-        sfcd.application.db_engine.auth.add_facebook_auth(
+        db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(
@@ -323,11 +338,11 @@ class TestAuth:
         assert resp.status_code == 200
 
     def test__signin__facebook__login_error(
-            self, web_app, api_secret_key,
+            self, db_engine, web_app, api_secret_key,
             email, facebook_id, facebook_token
     ):
         # add record to db
-        sfcd.application.db_engine.auth.add_facebook_auth(
+        db_engine.auth.add_facebook_auth(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(

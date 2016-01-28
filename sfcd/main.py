@@ -1,5 +1,10 @@
-import sfcd
+import logging
+
+import sfcd.application
 import sfcd.config
+
+
+logger = logging.getLogger('sfcd')
 
 
 if __name__ == '__main__':
@@ -11,17 +16,18 @@ if __name__ == '__main__':
     elif sfcd.config.DB_TYPE == 'mongo':
         db_url = sfcd.config.MONGO_DB_URL
 
-    # create application
-    sfcd.application = sfcd.Application(db_type, db_url)
+    flask_app, _ = \
+        sfcd.application.Application.setup_application(db_type, db_url)
 
-    sfcd.application.log.info('Initialized')
-    sfcd.application.log.info('Config: ...')
+    # after Application.setup_application
+    logger.info('Initialized')
+    logger.info('DB config: {} : {}'.format(db_url, db_url))
 
     # run web-view
-    sfcd.application.web_view.run(
+    flask_app.run(
         host=sfcd.config.FLASK_HOST,
         port=sfcd.config.FLASK_PORT,
         debug=sfcd.config.FLASK_DEBUG,
     )
 
-    sfcd.application.log.info('Terminate')
+    logger.info('Terminate')
