@@ -2,10 +2,25 @@ import uuid
 import hashlib
 
 
-def hash_password(password):
-    salt = uuid.uuid4().hex
-    return (hashlib.sha512(password + salt).hexdigest(), salt)
+class Crypto(object):
+    """
+    Crypto operations and constants
+    """
 
+    hashed_length = 128
+    salt_lenght = 32
 
-def validate_password_hash(password, hashed, salt):
-    return hashlib.sha512(password + salt).hexdigest() == hashed
+    @staticmethod
+    def hash_passphrase(passphrase):
+        """
+        Generates salt and return hashed value for passphrase
+        """
+        salt = uuid.uuid4().hex
+        return (hashlib.sha512(passphrase + salt).hexdigest(), salt)
+
+    @staticmethod
+    def validate_passphrase(passphrase, hashed, salt):
+        """
+        Validate user passphrase with stored hashed value and salt
+        """
+        return hashlib.sha512(passphrase + salt).hexdigest() == hashed
