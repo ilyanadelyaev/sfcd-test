@@ -97,8 +97,12 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         add simple auth record
         raises on empty or non-unique email
         """
+        # check input params
         if not email:
-            raise sfcd.db.exc.AuthError('empty email param')
+            raise sfcd.db.exc.AuthError('empty email')
+        # way to get max field length
+        if len(email) > ID.email.property.columns[0].type.length:
+            raise sfcd.db.exc.AuthError('email too long')
         #
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
@@ -154,10 +158,17 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         add facebook auth record
         raises on empty or non-unique email or facebook_id
         """
+        # check input params
         if not email:
-            raise sfcd.db.exc.AuthError('empty email param')
+            raise sfcd.db.exc.AuthError('empty email')
         if not facebook_id:
-            raise sfcd.db.exc.AuthError('empty facebook_id param')
+            raise sfcd.db.exc.AuthError('empty facebook_id')
+        # way to get max field length
+        if len(email) > ID.email.property.columns[0].type.length:
+            raise sfcd.db.exc.AuthError('email too long')
+        if len(facebook_id) > \
+                Facebook.facebook_id.property.columns[0].type.length:
+            raise sfcd.db.exc.AuthError('facebook_id too long')
         #
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #

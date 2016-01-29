@@ -220,10 +220,18 @@ class TestManager:
         """
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.register_simple_auth('', password)
-        assert str(ex_info.value) == 'empty email param'
+        assert str(ex_info.value) == 'empty email'
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.register_simple_auth(None, password)
-        assert str(ex_info.value) == 'empty email param'
+        assert str(ex_info.value) == 'empty email'
+
+    def test__register_simple_auth__email_too_long(self, auth_manager):
+        """
+        register simple auth: email too long error
+        """
+        with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
+            auth_manager.register_simple_auth('e' * 61, '')
+        assert str(ex_info.value) == 'email too long'
 
     def test__register_simple_auth__email_exists(
             self, session, auth_manager,
@@ -326,28 +334,46 @@ class TestManager:
             facebook_token, obj.hashed, obj.salt)
 
     def test__register_facebook_auth__empty_email(
-            self, session, auth_manager):
+            self, auth_manager):
         """
         catch error on empty facebook_id
         """
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.register_facebook_auth('', '', '')
-        assert str(ex_info.value) == 'empty email param'
+        assert str(ex_info.value) == 'empty email'
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.register_facebook_auth(None, '', '')
-        assert str(ex_info.value) == 'empty email param'
+        assert str(ex_info.value) == 'empty email'
+
+    def test__register_facebook_auth__email_too_long(
+            self, auth_manager, facebook_id):
+        """
+        register facebook auth: email too long
+        """
+        with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
+            auth_manager.register_facebook_auth('e' * 61, facebook_id, '')
+        assert str(ex_info.value) == 'email too long'
 
     def test__register_facebook_auth__empty_facebook_id(
-            self, session, auth_manager, email, facebook_token):
+            self, auth_manager, email, facebook_token):
         """
         catch error on empty facebook_id
         """
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.register_facebook_auth(email, '', facebook_token)
-        assert str(ex_info.value) == 'empty facebook_id param'
+        assert str(ex_info.value) == 'empty facebook_id'
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.register_facebook_auth(email, None, facebook_token)
-        assert str(ex_info.value) == 'empty facebook_id param'
+        assert str(ex_info.value) == 'empty facebook_id'
+
+    def test__register_facebook_auth__facebook_id_too_long(
+            self, auth_manager, email):
+        """
+        register facebook auth: facebook_id too long
+        """
+        with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
+            auth_manager.register_facebook_auth(email, 'f' * 121, '')
+        assert str(ex_info.value) == 'facebook_id too long'
 
     def test__register_facebook_auth__email_exists(
             self, session, auth_manager,
