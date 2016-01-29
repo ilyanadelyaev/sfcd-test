@@ -111,6 +111,9 @@ class AuthLogic(object):
         extendeble with new specific methods
         raises on error
         """
+        if not data:
+            raise RegistrationError('empty data')
+
         # check api secret key
         self._check_secret(data)
 
@@ -167,6 +170,9 @@ class AuthLogic(object):
         extendeble with new auth type functions
         raises on error
         """
+        if not data:
+            raise LoginError('empty data')
+
         # check api secret key
         self._check_secret(data)
 

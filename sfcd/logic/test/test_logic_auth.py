@@ -67,6 +67,19 @@ class TestAuthLogic:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('facebook_token', None)
 
+    def test__signup__invalid_input_data(self, auth_logic):
+        """
+        check for empty input
+        """
+        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
+            auth_logic.signup(None)
+        assert ex_info.value.message == \
+            'Registration error with: "empty data"'
+        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
+            auth_logic.signup({})
+        assert ex_info.value.message == \
+            'Registration error with: "empty data"'
+
     def test__signup__ivalid_auth_type(
             self, auth_logic, api_secret_key,
             email, password
@@ -219,6 +232,19 @@ class TestAuthLogic:
         })
         #
         assert db_engine.auth.email_exists(email)
+
+    def test__signin__invalid_input_data(self, auth_logic):
+        """
+        check for empty input
+        """
+        with pytest.raises(sfcd.logic.auth.LoginError) as ex_info:
+            auth_logic.signin(None)
+        assert ex_info.value.message == \
+            'Login error with: "empty data"'
+        with pytest.raises(sfcd.logic.auth.LoginError) as ex_info:
+            auth_logic.signin({})
+        assert ex_info.value.message == \
+            'Login error with: "empty data"'
 
     def test__signin__not_exists(self, auth_logic, api_secret_key, email):
         with pytest.raises(sfcd.logic.auth.LoginError) as ex_info:
