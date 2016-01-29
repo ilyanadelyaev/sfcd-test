@@ -8,18 +8,7 @@ def auth_logic(db_engine):
     return sfcd.logic.auth.AuthLogic(db_engine)
 
 
-class TestAuthLogic:
-    def test__check_secret(self, auth_logic, api_secret_key):
-        assert auth_logic._check_secret({'secret': api_secret_key}) is None
-        with pytest.raises(sfcd.logic.auth.InvalidSecretKey) as ex_info:
-            auth_logic._check_secret({'secret': 'some_key'})
-        assert ex_info.value.message == \
-            'Invalid secret key: "some_key"'
-        with pytest.raises(sfcd.logic.auth.InvalidSecretKey) as ex_info:
-            auth_logic._check_secret({})
-        assert ex_info.value.message == \
-            'Invalid secret key: "{}"'.format(None)
-
+class TestLogicAuth:
     def test__validate_email(self, auth_logic, email, email_2):
         assert auth_logic._validate_email(email) is None
         assert auth_logic._validate_email(email_2) is None

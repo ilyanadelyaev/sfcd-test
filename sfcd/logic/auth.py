@@ -1,25 +1,20 @@
 import validate_email  # external package
 
 import sfcd.db.exc
+import sfcd.logic.common
+import sfcd.logic.exc
 import sfcd.config
 
 
-class AuthError(Exception):
+class AuthError(sfcd.logic.exc.LogicError):
     """
-    Common auth error
+    Common logic.auth error
     """
     message_template = 'Unknown auth error with: "{v}"'
 
     def __init__(self, value):
         super(AuthError, self).__init__(
             self.message_template.format(v=value))
-
-
-class InvalidSecretKey(AuthError):
-    """
-    Secret key invalid or not specified
-    """
-    message_template = 'Invalid secret key: "{v}"'
 
 
 class InvalidAuthType(AuthError):
@@ -76,8 +71,6 @@ class AuthLogic(object):
     def __init__(self, db_engine):
         # process all operations via db engine
         self.db_engine = db_engine
-        # ? or get if from secret storage
-        self.secret = sfcd.config.API_SECRET_KEY
 
     def _get_auth_func(self, auth_type, func_type):
         """
@@ -103,12 +96,6 @@ class AuthLogic(object):
         if not hasattr(self, func):
             raise InvalidAuthType(auth_type)
         return getattr(self, func)
-
-    def _check_secret(self, data):
-        # ? hash(secret)
-        secret = data.get('secret', None)
-        if not secret == self.secret:
-            raise InvalidSecretKey(secret)
 
     @staticmethod
     def _validate_email(email):
@@ -147,7 +134,7 @@ class AuthLogic(object):
             raise RegistrationError('empty data')
 
         # check api secret key
-        self._check_secret(data)
+        sfcd.logic.common.validate_secret_key(data)
 
         # validate email
         email = data.get('email', None)
@@ -196,7 +183,7 @@ class AuthLogic(object):
             raise LoginError('empty data')
 
         # check api secret key
-        self._check_secret(data)
+        sfcd.logic.common.validate_secret_key(data)
 
         # validate email
         email = data.get('email', None)
