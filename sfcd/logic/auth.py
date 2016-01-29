@@ -66,11 +66,43 @@ class AuthLogic(object):
     aggregator functions are extendeble with new auth types
     """
 
+    # add auth methods here
+    AUTH_METHODS = {
+        # auth_type: (signup_func, signin_func)
+        'simple': ('_simple_signup', '_simple_signin'),
+        'facebook': ('_facebook_signup', '_facebook_signin'),
+    }
+
     def __init__(self, db_engine):
         # process all operations via db engine
         self.db_engine = db_engine
         # ? or get if from secret storage
         self.secret = sfcd.config.API_SECRET_KEY
+
+    def _get_auth_func(self, auth_type, func_type):
+        """
+        ckeck if selected type is allowed in config
+        get and check auth func
+        :func: 'signup' or 'signin'
+        """
+        # check for allowed methods in config
+        if auth_type not in sfcd.config.AUTH_METHODS:
+            raise InvalidAuthType(auth_type)
+        # get all funcs
+        auth_funcs = self.AUTH_METHODS.get(auth_type, None)
+        if not auth_funcs:
+            raise InvalidAuthType(auth_type)
+        # get and specific func
+        if func_type == 'signup':
+            func = auth_funcs[0]
+        elif func_type == 'signin':
+            func = auth_funcs[1]
+        else:
+            raise InvalidAuthType(auth_type)
+        # check func
+        if not hasattr(self, func):
+            raise InvalidAuthType(auth_type)
+        return getattr(self, func)
 
     def _check_secret(self, data):
         # ? hash(secret)
@@ -121,24 +153,14 @@ class AuthLogic(object):
         email = data.get('email', None)
         self._validate_email(email)
 
-        auth_type = data.get('type', 'simple')
-
-        # check for allowed methods in config
-        if auth_type not in sfcd.config.AUTH_METHODS:
-            raise InvalidAuthType(auth_type)
-
         # check if email exists
         if self.db_engine.auth.email_exists(email):
             raise RegistrationError('email "{}" exists'.format(email))
 
+        # call specific function
+        auth_type = data.get('type', 'simple')
         try:
-            if auth_type == 'simple':
-                self._simple_signup(data)
-            elif auth_type == 'facebook':
-                self._facebook_signup(data)
-
-            # add more auth methods here
-
+            self._get_auth_func(auth_type, 'signup')(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise RegistrationError(ex.message)
@@ -177,24 +199,13 @@ class AuthLogic(object):
         self._check_secret(data)
 
         # validate email
-        # ? because we can
         email = data.get('email', None)
         self._validate_email(email)
 
+        # call specific function
         auth_type = data.get('type', 'simple')
-
-        # check for allowed methods in config
-        if auth_type not in sfcd.config.AUTH_METHODS:
-            raise InvalidAuthType(auth_type)
-
         try:
-            if auth_type == 'simple':
-                return self._simple_signin(data)
-            elif auth_type == 'facebook':
-                return self._facebook_signin(data)
-
-            # add more auth methods here
-
+            return self._get_auth_func(auth_type, 'signin')(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise LoginError(ex.message)
