@@ -309,7 +309,11 @@ class TestManager:
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.get_token_simple_auth('', password)
         assert str(ex_info.value) == \
-            'email "" not exists'
+            'empty email'
+        with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
+            auth_manager.get_token_simple_auth('exists@me.me', password)
+        assert str(ex_info.value) == \
+            'email "exists@me.me" not exists'
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.get_token_simple_auth(email, '')
         assert str(ex_info.value) == \
@@ -500,11 +504,20 @@ class TestManager:
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.get_token_facebook_auth('', '', '')
         assert str(ex_info.value) == \
-            'email "" not exists'
+            'empty email'
+        with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
+            auth_manager.get_token_facebook_auth(
+                'exists@me.me', facebook_id, '')
+        assert str(ex_info.value) == \
+            'email "exists@me.me" not exists'
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.get_token_facebook_auth(email, '', '')
         assert str(ex_info.value) == \
-            'facebook_id "" not exists'
+            'empty facebook_id'
+        with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
+            auth_manager.get_token_facebook_auth(email, 'exists', '')
+        assert str(ex_info.value) == \
+            'facebook_id "exists" not exists'
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             auth_manager.get_token_facebook_auth(email, facebook_id, '')
         assert str(ex_info.value) == \
