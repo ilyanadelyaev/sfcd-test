@@ -38,6 +38,22 @@ def db_engine(app_objects):
 
 
 class TestAuth:
+    def test__signup__get_request(self, web_app):
+        resp = web_app.get(
+            '/auth/signup/',
+            expect_errors=True
+        )
+        assert resp.status_code == 405
+
+    def test__signup__empty_data(self, web_app):
+        resp = web_app.post(
+            '/auth/signup/',
+            expect_errors=True
+        )
+        assert resp.status_code == 400
+        assert resp.json['error'] == \
+            'Registration error with: "empty data"'
+
     def test__signup__invalid_secret_key(self, web_app):
         resp = web_app.post_json(
             '/auth/signup/',
@@ -212,6 +228,22 @@ class TestAuth:
         assert resp.status_code == 400
         assert resp.json['error'] == \
             'Ivalid argument facebook_token = ""'
+
+    def test__signin__get_request(self, web_app):
+        resp = web_app.get(
+            '/auth/signin/',
+            expect_errors=True
+        )
+        assert resp.status_code == 405
+
+    def test__signin__empty_data(self, web_app):
+        resp = web_app.post(
+            '/auth/signin/',
+            expect_errors=True
+        )
+        assert resp.status_code == 400
+        assert resp.json['error'] == \
+            'Login error with: "empty data"'
 
     def test__signin__invalid_secret_key(self, web_app):
         resp = web_app.post_json(
