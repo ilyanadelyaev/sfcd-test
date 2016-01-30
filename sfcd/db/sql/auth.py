@@ -157,12 +157,12 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         # validate email - raises on error
         self._validate_email(email)
         # connect to database and start transaction
-        session = self.get_session()
-        # check for email record in db
-        return bool(
-            session.query(sqlalchemy.sql.exists().where(
-                ID.email == email)).scalar()
-        )
+        with self.session_scope() as session:
+            # check for email record in db
+            return bool(
+                session.query(sqlalchemy.sql.exists().where(
+                    ID.email == email)).scalar()
+            )
 
     # rewrite it to specific errors
     # TimeoutError
@@ -179,24 +179,24 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         # hash token to store in db
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         # connect to database and start transaction
-        session = self.get_session()
-        # check for email in database
-        # to prevent IntegrityError and raise human-readable exception
-        if session.query(sqlalchemy.sql.exists().where(
-                ID.email == email)).scalar():
-            raise sfcd.db.exc.AuthError(
-                'email "{}" exists'.format(email))
-        # add id and simple records to db and commit
-        id_obj = self._create_id_obj(session, email)
-        session.add(id_obj)
-        session.flush()  # make insert to get id_obj.id
-        simple_obj = Simple(
-            auth_id=id_obj.id,
-            hashed=hashed,
-            salt=salt,
-        )
-        session.add(simple_obj)
-        session.commit()
+        with self.session_scope() as session:
+            # check for email in database
+            # to prevent IntegrityError and raise human-readable exception
+            if session.query(sqlalchemy.sql.exists().where(
+                    ID.email == email)).scalar():
+                raise sfcd.db.exc.AuthError(
+                    'email "{}" exists'.format(email))
+            # add id and simple records to db and commit
+            id_obj = self._create_id_obj(session, email)
+            session.add(id_obj)
+            session.flush()  # make insert to get id_obj.id
+            simple_obj = Simple(
+                auth_id=id_obj.id,
+                hashed=hashed,
+                salt=salt,
+            )
+            session.add(simple_obj)
+            session.commit()
 
     # rewrite it to specific errors
     # TimeoutError
@@ -209,26 +209,26 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         # validate email - raises on error
         self._validate_email(email)
         # connect to database and start transaction
-        session = self.get_session()
-        # get id and simple records for specified parameters
-        objs = session.query(ID, Simple).join(Simple).filter(
-            ID.email == email).first()
-        # raises if specified not found
-        if not objs:
-            raise sfcd.db.exc.AuthError(
-                'email "{}" not exists'.format(email))
-        #
-        id_obj, session_obj = objs
-        # validate specified password and db data - raises on error
-        if not sfcd.misc.Crypto.validate_passphrase(
-                password, session_obj.hashed, session_obj.salt):
-            raise sfcd.db.exc.AuthError('invalid password')
-        # update auth_token if needed
-        if self._check_auth_token(id_obj):
-            session.add(id_obj)
-            session.commit()
-        #
-        return id_obj.auth_token
+        with self.session_scope() as session:
+            # get id and simple records for specified parameters
+            objs = session.query(ID, Simple).join(Simple).filter(
+                ID.email == email).first()
+            # raises if specified not found
+            if not objs:
+                raise sfcd.db.exc.AuthError(
+                    'email "{}" not exists'.format(email))
+            #
+            id_obj, session_obj = objs
+            # validate specified password and db data - raises on error
+            if not sfcd.misc.Crypto.validate_passphrase(
+                    password, session_obj.hashed, session_obj.salt):
+                raise sfcd.db.exc.AuthError('invalid password')
+            # update auth_token if needed
+            if self._check_auth_token(id_obj):
+                session.add(id_obj)
+                session.commit()
+            #
+            return id_obj.auth_token
 
     # rewrite it to specific errors
     # TimeoutError
@@ -247,31 +247,31 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         # hash token to store in db
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         # connect to database and start transaction
-        session = self.get_session()
-        # check for email in database because (unique=True)
-        # to prevent IntegrityError and raise human-readable exception
-        if session.query(sqlalchemy.sql.exists().where(
-                ID.email == email)).scalar():
-            raise sfcd.db.exc.AuthError(
-                'email "{}" exists'.format(email))
-        # check for facebook_id in database because (unique=True)
-        # same reason
-        if session.query(sqlalchemy.sql.exists().where(
-                Facebook.facebook_id == facebook_id)).scalar():
-            raise sfcd.db.exc.AuthError(
-                'facebook_id "{}" exists'.format(facebook_id))
-        # add id and facebook records to db and commit
-        id_obj = self._create_id_obj(session, email)
-        session.add(id_obj)
-        session.flush()  # make insert to get id_obj.id
-        facebook_obj = Facebook(
-            auth_id=id_obj.id,
-            facebook_id=facebook_id,
-            hashed=hashed,
-            salt=salt,
-        )
-        session.add(facebook_obj)
-        session.commit()
+        with self.session_scope() as session:
+            # check for email in database because (unique=True)
+            # to prevent IntegrityError and raise human-readable exception
+            if session.query(sqlalchemy.sql.exists().where(
+                    ID.email == email)).scalar():
+                raise sfcd.db.exc.AuthError(
+                    'email "{}" exists'.format(email))
+            # check for facebook_id in database because (unique=True)
+            # same reason
+            if session.query(sqlalchemy.sql.exists().where(
+                    Facebook.facebook_id == facebook_id)).scalar():
+                raise sfcd.db.exc.AuthError(
+                    'facebook_id "{}" exists'.format(facebook_id))
+            # add id and facebook records to db and commit
+            id_obj = self._create_id_obj(session, email)
+            session.add(id_obj)
+            session.flush()  # make insert to get id_obj.id
+            facebook_obj = Facebook(
+                auth_id=id_obj.id,
+                facebook_id=facebook_id,
+                hashed=hashed,
+                salt=salt,
+            )
+            session.add(facebook_obj)
+            session.commit()
 
     # rewrite it to specific errors
     # TimeoutError
@@ -286,31 +286,31 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         # validate facebook_id - raises on error
         self._validate_facebook_id(facebook_id)
         # connect to database and start transaction
-        session = self.get_session()
-        # check for email in database - raises if not exists
-        if not session.query(sqlalchemy.sql.exists().where(
-                ID.email == email)).scalar():
-            raise sfcd.db.exc.AuthError(
-                'email "{}" not exists'.format(email))
-        # get id and facebook records for specified parameters
-        objs = session.query(ID, Facebook).join(Facebook).filter(
-            sqlalchemy.sql.expression.and_(
-                ID.email == email,
-                Facebook.facebook_id == facebook_id,
-            )).first()
-        # raises if specified email and facebook_in not found
-        if not objs:
-            raise sfcd.db.exc.AuthError(
-                'facebook_id "{}" not exists'.format(facebook_id))
-        #
-        id_obj, facebook_obj = objs
-        # validate specified token and db data - raises on error
-        if not sfcd.misc.Crypto.validate_passphrase(
-                facebook_token, facebook_obj.hashed, facebook_obj.salt):
-            raise sfcd.db.exc.AuthError('invalid passphrase')
-        # update auth_token if needed
-        if self._check_auth_token(id_obj):
-            session.add(id_obj)
-            session.commit()
-        #
-        return id_obj.auth_token
+        with self.session_scope() as session:
+            # check for email in database - raises if not exists
+            if not session.query(sqlalchemy.sql.exists().where(
+                    ID.email == email)).scalar():
+                raise sfcd.db.exc.AuthError(
+                    'email "{}" not exists'.format(email))
+            # get id and facebook records for specified parameters
+            objs = session.query(ID, Facebook).join(Facebook).filter(
+                sqlalchemy.sql.expression.and_(
+                    ID.email == email,
+                    Facebook.facebook_id == facebook_id,
+                )).first()
+            # raises if specified email and facebook_in not found
+            if not objs:
+                raise sfcd.db.exc.AuthError(
+                    'facebook_id "{}" not exists'.format(facebook_id))
+            #
+            id_obj, facebook_obj = objs
+            # validate specified token and db data - raises on error
+            if not sfcd.misc.Crypto.validate_passphrase(
+                    facebook_token, facebook_obj.hashed, facebook_obj.salt):
+                raise sfcd.db.exc.AuthError('invalid passphrase')
+            # update auth_token if needed
+            if self._check_auth_token(id_obj):
+                session.add(id_obj)
+                session.commit()
+            #
+            return id_obj.auth_token

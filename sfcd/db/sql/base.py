@@ -1,3 +1,5 @@
+import contextlib
+
 import sqlalchemy.ext.declarative
 
 
@@ -12,7 +14,22 @@ class ManagerBase(object):
     """
 
     def __init__(self, session_maker):
-        self.session_maker = session_maker
+        # hide it from all inheritors
+        self.__session_maker = session_maker
 
-    def get_session(self):
-        return self.session_maker()
+    @contextlib.contextmanager
+    def session_scope(self):
+        """
+        Using:
+        with self.session_scope() as session:
+            ...
+        """
+        session = self.__session_maker()
+        try:
+            yield session
+            # session.commit()  # process commit manually
+        except:
+            session.rollback()
+            raise
+        finally:
+            session.close()
