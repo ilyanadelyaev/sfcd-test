@@ -1,4 +1,5 @@
 import sqlalchemy
+import sqlalchemy.types
 import sqlalchemy.sql
 import sqlalchemy.sql.expression
 
@@ -28,7 +29,8 @@ class ID(sfcd.db.sql.base.BaseModel):
         index=True,
     )
     auth_token = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.auth_token_length),
+        sqlalchemy.types.CHAR(
+            sfcd.misc.Crypto.auth_token_length),
     )
 
 
