@@ -8,7 +8,7 @@ class TestCrypto:
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         assert len(hashed) == sfcd.misc.Crypto.hashed_length
-        assert len(salt) == sfcd.misc.Crypto.salt_lenght
+        assert len(salt) == sfcd.misc.Crypto.salt_length
         #
         assert sfcd.misc.Crypto.validate_passphrase(password, hashed, salt)
 
@@ -18,7 +18,7 @@ class TestCrypto:
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         assert len(hashed) == sfcd.misc.Crypto.hashed_length
-        assert len(salt) == sfcd.misc.Crypto.salt_lenght
+        assert len(salt) == sfcd.misc.Crypto.salt_length
         #
         assert sfcd.misc.Crypto.validate_passphrase(password, hashed, salt)
 
@@ -28,7 +28,7 @@ class TestCrypto:
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         assert len(hashed) == sfcd.misc.Crypto.hashed_length
-        assert len(salt) == sfcd.misc.Crypto.salt_lenght
+        assert len(salt) == sfcd.misc.Crypto.salt_length
         #
         assert sfcd.misc.Crypto.validate_passphrase(password, hashed, salt)
 
@@ -38,7 +38,7 @@ class TestCrypto:
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
         assert len(hashed) == sfcd.misc.Crypto.hashed_length
-        assert len(salt) == sfcd.misc.Crypto.salt_lenght
+        assert len(salt) == sfcd.misc.Crypto.salt_length
         #
         assert sfcd.misc.Crypto.validate_passphrase(password, hashed, salt)
 

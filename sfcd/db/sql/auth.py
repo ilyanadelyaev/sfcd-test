@@ -55,7 +55,7 @@ class Simple(sfcd.db.sql.base.BaseModel):
         sqlalchemy.String(sfcd.misc.Crypto.hashed_length)
     )
     salt = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.salt_lenght)
+        sqlalchemy.String(sfcd.misc.Crypto.salt_length)
     )
 
 
@@ -80,7 +80,7 @@ class Facebook(sfcd.db.sql.base.BaseModel):
         sqlalchemy.String(sfcd.misc.Crypto.hashed_length)
     )
     salt = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.salt_lenght)
+        sqlalchemy.String(sfcd.misc.Crypto.salt_length)
     )
 
 
@@ -98,7 +98,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
     @staticmethod
     def _validate_email(email):
         """
-        validate email lenght bounds: (0..max_length]
+        validate email length bounds: (0..max_length]
         raises on error
         """
         if not email:
@@ -110,7 +110,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
     @staticmethod
     def _validate_facebook_id(facebook_id):
         """
-        validate facebook_id lenght bounds: (0..max_length]
+        validate facebook_id length bounds: (0..max_length]
         raises on error
         """
         if not facebook_id:

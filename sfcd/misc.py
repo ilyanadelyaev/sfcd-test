@@ -9,7 +9,7 @@ class Crypto(object):
     """
 
     hashed_length = 128
-    salt_lenght = 32
+    salt_length = 32
 
     auth_token_length = 64
 
