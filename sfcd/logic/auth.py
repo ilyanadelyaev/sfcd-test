@@ -72,7 +72,7 @@ class AuthLogic(object):
         # process all operations via db engine
         self.db_engine = db_engine
 
-    def _get_auth_func(self, auth_type, func_type):
+    def _auth_func(self, auth_type, func_type):
         """
         ckeck if selected type is allowed in config
         get and check auth func
@@ -133,17 +133,14 @@ class AuthLogic(object):
         if not data:
             raise RegistrationError('empty data')
 
+        # keep this method on secret side
         # check api secret key
         sfcd.logic.common.validate_secret_key(data)
-
-        # validate email
-        email = data.get('email', None)
-        self._validate_email(email)
 
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            self._get_auth_func(auth_type, 'signup')(data)
+            self._auth_func(auth_type, 'signup')(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise RegistrationError(ex.message)
@@ -152,6 +149,7 @@ class AuthLogic(object):
         email = data.get('email', None)
         password = data.get('password', None)
         # check params
+        self._validate_email(email)
         self._validate_simple(password)
         # add record to db
         self.db_engine.auth.register_simple_auth(email, password)
@@ -161,6 +159,7 @@ class AuthLogic(object):
         facebook_id = data.get('facebook_id', None)
         facebook_token = data.get('facebook_token', None)
         # check params
+        self._validate_email(email)
         self._validate_facebook(facebook_id, facebook_token)
         # add record to db
         self.db_engine.auth.register_facebook_auth(
@@ -178,17 +177,14 @@ class AuthLogic(object):
         if not data:
             raise LoginError('empty data')
 
+        # keep this method on secret side
         # check api secret key
         sfcd.logic.common.validate_secret_key(data)
-
-        # validate email
-        email = data.get('email', None)
-        self._validate_email(email)
 
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            return self._get_auth_func(auth_type, 'signin')(data)
+            return self._auth_func(auth_type, 'signin')(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise LoginError(ex.message)
@@ -197,6 +193,7 @@ class AuthLogic(object):
         email = data.get('email', None)
         password = data.get('password', None)
         # check params
+        self._validate_email(email)
         self._validate_simple(password)
         # get token or raise exception
         return self.db_engine.auth.get_token_simple_auth(email, password)
@@ -206,6 +203,7 @@ class AuthLogic(object):
         facebook_id = data.get('facebook_id', None)
         facebook_token = data.get('facebook_token', None)
         # check params
+        self._validate_email(email)
         self._validate_facebook(facebook_id, facebook_token)
         # get token or raise exception
         return self.db_engine.auth.get_token_facebook_auth(
