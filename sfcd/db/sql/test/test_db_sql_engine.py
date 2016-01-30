@@ -21,9 +21,6 @@ class TestDBEngine:
             db_engine.__class__, 'auth')
         #
         assert self._check_method_exists(
-            db_engine.auth.__class__, 'email_exists')
-        #
-        assert self._check_method_exists(
             db_engine.auth.__class__, 'register_simple_auth')
         assert self._check_method_exists(
             db_engine.auth.__class__, 'get_token_simple_auth')

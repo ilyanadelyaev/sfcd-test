@@ -184,22 +184,6 @@ class TestModels:
 ########################################
 
 class TestManager:
-    def test__email_exists(self, session, auth_manager, email):
-        """
-        check if auth exists in system
-        """
-        i = sfcd.db.sql.auth.ID(email=email)
-        session.add(i)
-        session.commit()
-        #
-        assert auth_manager.email_exists(email)
-
-    def test__email_exists__not(self, auth_manager, email):
-        """
-        check if email not exists
-        """
-        assert not auth_manager.email_exists(email)
-
     def test__register_simple_auth(
             self, session, auth_manager, email, password
     ):

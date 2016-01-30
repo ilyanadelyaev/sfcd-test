@@ -193,10 +193,9 @@ class TestLogicAuth:
             'Registration error with: "email "{}" exists"'.format(email)
 
     def test__signup__simple(
-            self, db_engine, auth_logic, api_secret_key, email, password
+            self, db_engine, auth_logic, api_secret_key,
+            email, password
     ):
-        assert not db_engine.auth.email_exists(email)
-        #
         auth_logic.signup({
             'secret': api_secret_key,
             'type': 'simple',
@@ -204,14 +203,12 @@ class TestLogicAuth:
             'password': password,
         })
         #
-        assert db_engine.auth.email_exists(email)
+        assert db_engine.auth.get_token_simple_auth(email, password)
 
     def test__signup__facebook(
             self, db_engine, auth_logic, api_secret_key,
             email, facebook_id, facebook_token
     ):
-        assert not db_engine.auth.email_exists(email)
-        #
         auth_logic.signup({
             'secret': api_secret_key,
             'type': 'facebook',
@@ -220,7 +217,8 @@ class TestLogicAuth:
             'facebook_token': facebook_token,
         })
         #
-        assert db_engine.auth.email_exists(email)
+        assert db_engine.auth.get_token_facebook_auth(
+            email, facebook_id, facebook_token)
 
     def test__signin__invalid_input_data(self, auth_logic):
         """

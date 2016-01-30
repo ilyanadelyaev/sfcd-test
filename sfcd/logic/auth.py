@@ -140,10 +140,6 @@ class AuthLogic(object):
         email = data.get('email', None)
         self._validate_email(email)
 
-        # check if email exists
-        if self.db_engine.auth.email_exists(email):
-            raise RegistrationError('email "{}" exists'.format(email))
-
         # call specific function
         auth_type = data.get('type', 'simple')
         try:

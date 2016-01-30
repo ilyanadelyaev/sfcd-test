@@ -149,23 +149,6 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
 
     # rewrite it to specific errors
     # TimeoutError
-    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
-    def email_exists(self, email):
-        """
-        check if email exists in system
-        """
-        # validate email - raises on error
-        self._validate_email(email)
-        # connect to database and start transaction
-        with self.session_scope() as session:
-            # check for email record in db
-            return bool(
-                session.query(sqlalchemy.sql.exists().where(
-                    ID.email == email)).scalar()
-            )
-
-    # rewrite it to specific errors
-    # TimeoutError
     # IntegrityError - non-unique value
     # retry IntegrityError will raise AuthError
     @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
