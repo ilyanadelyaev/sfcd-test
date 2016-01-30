@@ -1,11 +1,17 @@
+import logging
+
 import sqlalchemy
 import sqlalchemy.types
 import sqlalchemy.sql
 import sqlalchemy.sql.expression
+import sqlalchemy.exc
 
 import sfcd.misc
 import sfcd.db.exc
 import sfcd.db.sql.base
+
+
+logger = logging.getLogger('sfcd')
 
 
 ########################################
@@ -141,6 +147,9 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             return True
         return False
 
+    # rewrite it to specific errors
+    # TimeoutError
+    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def email_exists(self, email):
         """
         check if email exists in system
@@ -155,6 +164,11 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                 ID.email == email)).scalar()
         )
 
+    # rewrite it to specific errors
+    # TimeoutError
+    # IntegrityError - non-unique value
+    # retry IntegrityError will raise AuthError
+    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def register_simple_auth(self, email, password):
         """
         add simple auth record
@@ -184,6 +198,9 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         session.add(simple_obj)
         session.commit()
 
+    # rewrite it to specific errors
+    # TimeoutError
+    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def get_token_simple_auth(self, email, password):
         """
         get token via sipmle auth
@@ -213,6 +230,11 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         #
         return id_obj.auth_token
 
+    # rewrite it to specific errors
+    # TimeoutError
+    # IntegrityError - non-unique value
+    # retry IntegrityError will raise AuthError
+    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def register_facebook_auth(self, email, facebook_id, facebook_token):
         """
         add facebook auth record
@@ -251,6 +273,9 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         session.add(facebook_obj)
         session.commit()
 
+    # rewrite it to specific errors
+    # TimeoutError
+    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def get_token_facebook_auth(self, email, facebook_id, facebook_token):
         """
         get token via facebook auth
