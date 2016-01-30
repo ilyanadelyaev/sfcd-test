@@ -29,7 +29,7 @@ class ID(sfcd.db.sql.base.BaseModel):
         index=True,
     )
     auth_token = sqlalchemy.Column(
-        sqlalchemy.types.CHAR(
+        sqlalchemy.types.String(
             sfcd.misc.Crypto.auth_token_length),
     )
 
@@ -83,6 +83,12 @@ class Facebook(sfcd.db.sql.base.BaseModel):
 ########################################
 
 class AuthManager(sfcd.db.sql.base.ManagerBase):
+    """
+    Process all auth models in one manager
+    """
+
+    AUTH_TOKEN_MOCK = '0' * ID.auth_token.property.columns[0].type.length
+
     @staticmethod
     def _validate_email(email):
         """
@@ -107,6 +113,33 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         if len(facebook_id) > \
                 Facebook.facebook_id.property.columns[0].type.length:
             raise sfcd.db.exc.AuthError('facebook_id too long')
+
+    @classmethod
+    def _create_id_obj(cls, session, email):
+        """
+        Special method for ID record creation
+        Fill auth_key with mock to prevent db fragmentation
+        """
+        return ID(
+            email=email,
+            auth_token=cls.AUTH_TOKEN_MOCK,
+        )
+
+    @classmethod
+    def _check_auth_token(cls, id_obj):
+        """
+        DUMMUY
+        Check TTL for auth_token
+        Update if needed
+        return True for commit
+        """
+        # not so fast but now its dummy
+        # and will be replaced with ttl stuff on production
+        if id_obj.auth_token == cls.AUTH_TOKEN_MOCK:
+            id_obj.auth_token = sfcd.misc.Crypto.generate_auth_token()
+            # check here for TTL and so on
+            return True
+        return False
 
     def email_exists(self, email):
         """
@@ -140,15 +173,15 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             raise sfcd.db.exc.AuthError(
                 'email "{}" exists'.format(email))
         # add id and simple records to db and commit
-        i = ID(email=email)
-        session.add(i)
-        session.flush()  # make insert to get i.id
-        p = Simple(
-            auth_id=i.id,
+        id_obj = self._create_id_obj(session, email)
+        session.add(id_obj)
+        session.flush()  # make insert to get id_obj.id
+        simple_obj = Simple(
+            auth_id=id_obj.id,
             hashed=hashed,
             salt=salt,
         )
-        session.add(p)
+        session.add(simple_obj)
         session.commit()
 
     def get_token_simple_auth(self, email, password):
@@ -161,26 +194,24 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         # connect to database and start transaction
         session = self.get_session()
         # get id and simple records for specified parameters
-        obj = session.query(ID, Simple).join(Simple).filter(
+        objs = session.query(ID, Simple).join(Simple).filter(
             ID.email == email).first()
         # raises if specified not found
-        if not obj:
+        if not objs:
             raise sfcd.db.exc.AuthError(
                 'email "{}" not exists'.format(email))
         #
-        i, s = obj
+        id_obj, session_obj = objs
         # validate specified password and db data - raises on error
         if not sfcd.misc.Crypto.validate_passphrase(
-                password, s.hashed, s.salt):
+                password, session_obj.hashed, session_obj.salt):
             raise sfcd.db.exc.AuthError('invalid password')
-        # generate auth_token if needed
-        # ? what about ttl
-        if not i.auth_token:
-            i.auth_token = sfcd.misc.Crypto.generate_auth_token()
-            session.add(i)
+        # update auth_token if needed
+        if self._check_auth_token(id_obj):
+            session.add(id_obj)
             session.commit()
         #
-        return i.auth_token
+        return id_obj.auth_token
 
     def register_facebook_auth(self, email, facebook_id, facebook_token):
         """
@@ -208,16 +239,16 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             raise sfcd.db.exc.AuthError(
                 'facebook_id "{}" exists'.format(facebook_id))
         # add id and facebook records to db and commit
-        i = ID(email=email)
-        session.add(i)
-        session.flush()  # make insert to get i.id
-        f = Facebook(
-            auth_id=i.id,
+        id_obj = self._create_id_obj(session, email)
+        session.add(id_obj)
+        session.flush()  # make insert to get id_obj.id
+        facebook_obj = Facebook(
+            auth_id=id_obj.id,
             facebook_id=facebook_id,
             hashed=hashed,
             salt=salt,
         )
-        session.add(f)
+        session.add(facebook_obj)
         session.commit()
 
     def get_token_facebook_auth(self, email, facebook_id, facebook_token):
@@ -237,26 +268,24 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             raise sfcd.db.exc.AuthError(
                 'email "{}" not exists'.format(email))
         # get id and facebook records for specified parameters
-        obj = session.query(ID, Facebook).join(Facebook).filter(
+        objs = session.query(ID, Facebook).join(Facebook).filter(
             sqlalchemy.sql.expression.and_(
                 ID.email == email,
                 Facebook.facebook_id == facebook_id,
             )).first()
         # raises if specified email and facebook_in not found
-        if not obj:
+        if not objs:
             raise sfcd.db.exc.AuthError(
                 'facebook_id "{}" not exists'.format(facebook_id))
         #
-        i, f = obj
+        id_obj, facebook_obj = objs
         # validate specified token and db data - raises on error
         if not sfcd.misc.Crypto.validate_passphrase(
-                facebook_token, f.hashed, f.salt):
+                facebook_token, facebook_obj.hashed, facebook_obj.salt):
             raise sfcd.db.exc.AuthError('invalid passphrase')
-        # generate auth_token if needed
-        # ? what about ttl
-        if not i.auth_token:
-            i.auth_token = sfcd.misc.Crypto.generate_auth_token()
-            session.add(i)
+        # update auth_token if needed
+        if self._check_auth_token(id_obj):
+            session.add(id_obj)
             session.commit()
         #
-        return i.auth_token
+        return id_obj.auth_token

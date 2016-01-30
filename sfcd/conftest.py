@@ -33,6 +33,11 @@ def password():
 
 
 @pytest.fixture
+def auth_token():
+    return str(uuid.uuid4())
+
+
+@pytest.fixture
 def facebook_id():
     return str(uuid.uuid4())
 

@@ -23,16 +23,20 @@ def auth_manager(session_maker):
 ########################################
 
 class TestModels:
-    def test__id(self, session, email):
+    def test__id(self, session, email, auth_token):
         """
         test auth creation
         """
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = sfcd.db.sql.auth.ID(
+            email=email,
+            auth_token=auth_token,
+        )
         session.add(i)
         session.commit()
         i = session.query(sfcd.db.sql.auth.ID).filter_by(id=i.id).first()
         assert i.id is not None
         assert i.email == email
+        assert i.auth_token == auth_token
 
     def test__id__same_email(self, session, email):
         """
@@ -262,7 +266,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
@@ -271,6 +275,7 @@ class TestManager:
         # some token
         token = auth_manager.get_token_simple_auth(email, password)
         assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert token != auth_manager.AUTH_TOKEN_MOCK
 
     def test__get_token_simple_auth__tokens_equal(
             self, session, auth_manager, email, password
@@ -280,7 +285,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
@@ -299,7 +304,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         p = sfcd.db.sql.auth.Simple(auth_id=i.id, hashed=hashed, salt=salt)
@@ -388,7 +393,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
@@ -415,7 +420,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
@@ -440,7 +445,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
@@ -455,6 +460,7 @@ class TestManager:
         token = auth_manager.get_token_facebook_auth(
             email, facebook_id, facebook_token)
         assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert token != auth_manager.AUTH_TOKEN_MOCK
 
     def test__get_token_facebook_auth__tokens_equal(
             self, session, auth_manager, email, facebook_id, facebook_token):
@@ -463,7 +469,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
@@ -489,7 +495,7 @@ class TestManager:
         """
         hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
         #
-        i = sfcd.db.sql.auth.ID(email=email)
+        i = auth_manager._create_id_obj(session, email)
         session.add(i)
         session.flush()
         f = sfcd.db.sql.auth.Facebook(
