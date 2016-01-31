@@ -137,7 +137,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         DUMMUY
         Check TTL for auth_token
         Update if needed
-        return True for commit
+        return True for update
         """
         # not so fast but now its dummy
         # and will be replaced with ttl stuff on production
@@ -169,7 +169,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                     ID.email == email)).scalar():
                 raise sfcd.db.exc.AuthError(
                     'email "{}" exists'.format(email))
-            # add id and simple records to db and commit
+            # add id and simple records to db
             id_obj = self._create_id_obj(session, email)
             session.add(id_obj)
             session.flush()  # make insert to get id_obj.id
@@ -179,7 +179,6 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                 salt=salt,
             )
             session.add(simple_obj)
-            session.commit()
 
     # rewrite it to specific errors
     # TimeoutError
@@ -195,7 +194,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         with self.session_scope() as session:
             # get id and simple records for specified parameters
             objs = session.query(ID, Simple).join(Simple).filter(
-                ID.email == email).first()
+                ID.email == email).with_for_update(read=True).first()
             # raises if specified not found
             if not objs:
                 raise sfcd.db.exc.AuthError(
@@ -209,7 +208,6 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             # update auth_token if needed
             if self._check_auth_token(id_obj):
                 session.add(id_obj)
-                session.commit()
             #
             return id_obj.auth_token
 
@@ -243,7 +241,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                     Facebook.facebook_id == facebook_id)).scalar():
                 raise sfcd.db.exc.AuthError(
                     'facebook_id "{}" exists'.format(facebook_id))
-            # add id and facebook records to db and commit
+            # add id and facebook records to db
             id_obj = self._create_id_obj(session, email)
             session.add(id_obj)
             session.flush()  # make insert to get id_obj.id
@@ -254,7 +252,6 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                 salt=salt,
             )
             session.add(facebook_obj)
-            session.commit()
 
     # rewrite it to specific errors
     # TimeoutError
@@ -280,7 +277,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                 sqlalchemy.sql.expression.and_(
                     ID.email == email,
                     Facebook.facebook_id == facebook_id,
-                )).first()
+                )).with_for_update(read=True).first()
             # raises if specified email and facebook_in not found
             if not objs:
                 raise sfcd.db.exc.AuthError(
@@ -294,6 +291,5 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
             # update auth_token if needed
             if self._check_auth_token(id_obj):
                 session.add(id_obj)
-                session.commit()
             #
             return id_obj.auth_token

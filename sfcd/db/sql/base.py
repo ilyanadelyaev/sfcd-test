@@ -27,7 +27,7 @@ class ManagerBase(object):
         session = self.__session_maker()
         try:
             yield session
-            # session.commit()  # process commit manually
+            session.commit()  # and release all db locks
         except:
             session.rollback()
             raise
