@@ -132,7 +132,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         )
 
     @classmethod
-    def _check_auth_token(cls, id_obj):
+    def _update_auth_token(cls, id_obj):
         """
         DUMMUY
         Check TTL for auth_token
@@ -192,7 +192,9 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         self._validate_email(email)
         # connect to database and start transaction
         with self.session_scope() as session:
-            # get id and simple records for specified parameters
+            # get id and simple records
+            # using SELECT .. FOR UPDATE to prevent
+            # simultaneously auth_token updates
             objs = session.query(ID, Simple).join(Simple).filter(
                 ID.email == email).with_for_update(read=False).first()
             # raises if specified not found
@@ -206,7 +208,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                     password, session_obj.hashed, session_obj.salt):
                 raise sfcd.db.exc.AuthError('invalid password')
             # update auth_token if needed
-            if self._check_auth_token(id_obj):
+            if self._update_auth_token(id_obj):
                 session.add(id_obj)
             #
             return id_obj.auth_token
@@ -272,7 +274,9 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                     ID.email == email)).scalar():
                 raise sfcd.db.exc.AuthError(
                     'email "{}" not exists'.format(email))
-            # get id and facebook records for specified parameters
+            # get id and facebook records
+            # using SELECT .. FOR UPDATE to prevent
+            # simultaneously auth_token updates
             objs = session.query(ID, Facebook).join(Facebook).filter(
                 sqlalchemy.sql.expression.and_(
                     ID.email == email,
@@ -289,7 +293,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                     facebook_token, facebook_obj.hashed, facebook_obj.salt):
                 raise sfcd.db.exc.AuthError('invalid passphrase')
             # update auth_token if needed
-            if self._check_auth_token(id_obj):
+            if self._update_auth_token(id_obj):
                 session.add(id_obj)
             #
             return id_obj.auth_token
