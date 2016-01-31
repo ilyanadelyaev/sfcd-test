@@ -194,7 +194,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
         with self.session_scope() as session:
             # get id and simple records for specified parameters
             objs = session.query(ID, Simple).join(Simple).filter(
-                ID.email == email).with_for_update(read=True).first()
+                ID.email == email).with_for_update(read=False).first()
             # raises if specified not found
             if not objs:
                 raise sfcd.db.exc.AuthError(
@@ -277,7 +277,7 @@ class AuthManager(sfcd.db.sql.base.ManagerBase):
                 sqlalchemy.sql.expression.and_(
                     ID.email == email,
                     Facebook.facebook_id == facebook_id,
-                )).with_for_update(read=True).first()
+                )).with_for_update(read=False).first()
             # raises if specified email and facebook_in not found
             if not objs:
                 raise sfcd.db.exc.AuthError(
