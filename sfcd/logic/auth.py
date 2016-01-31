@@ -50,7 +50,7 @@ class LoginError(AuthError):
     message_template = 'Login error with: "{v}"'
 
 
-class AuthLogic(object):
+class Manager(object):
     """
     make signup and signin here
     verify all parameters here including secret key
@@ -61,18 +61,102 @@ class AuthLogic(object):
     aggregator functions are extendeble with new auth types
     """
 
-    # add auth methods here
+    class BaseMethod(object):
+        """
+        Inherit specific auth method processors from here
+        """
+        def __init__(self, db_engine):
+            self.db_engine = db_engine
+
+        @staticmethod
+        def validate_email(email):
+            if email is None:
+                raise InvalidArgument('email', email)
+            # validate via extended package "validate-email"
+            if not validate_email.validate_email(email):
+                raise InvalidArgument('email', email)
+
+        @staticmethod
+        def validate(*args, **kwargs):
+            raise NotImplementedError
+
+        def signup(self, *args, **kwargs):
+            raise NotImplementedError
+
+        def signin(self, *args, **kwargs):
+            raise NotImplementedError
+
+    class SimpleMethod(BaseMethod):
+        @staticmethod
+        def validate(password):
+            # ? check size
+            if password is None:
+                raise InvalidArgument('password', password)
+
+        def signup(self, data):
+            email = data.get('email', None)
+            password = data.get('password', None)
+            # check params
+            self.validate_email(email)
+            self.validate(password)
+            # add record to db
+            self.db_engine.auth.register_simple_auth(
+                email, password)
+
+        def signin(self, data):
+            email = data.get('email', None)
+            password = data.get('password', None)
+            # check params
+            self.validate_email(email)
+            self.validate(password)
+            # get token or raise exception
+            return self.db_engine.auth.get_token_simple_auth(
+                email, password)
+
+    class FacebookMethod(BaseMethod):
+        @staticmethod
+        def validate(facebook_id, facebook_token):
+            # not empty
+            if not facebook_id:
+                raise InvalidArgument('facebook_id', facebook_id)
+            # not empty
+            if not facebook_token:
+                raise InvalidArgument('facebook_token', facebook_token)
+
+        def signup(self, data):
+            email = data.get('email', None)
+            facebook_id = data.get('facebook_id', None)
+            facebook_token = data.get('facebook_token', None)
+            # check params
+            self.validate_email(email)
+            self.validate(facebook_id, facebook_token)
+            # add record to db
+            self.db_engine.auth.register_facebook_auth(
+                email, facebook_id, facebook_token)
+
+        def signin(self, data):
+            email = data.get('email', None)
+            facebook_id = data.get('facebook_id', None)
+            facebook_token = data.get('facebook_token', None)
+            # check params
+            self.validate_email(email)
+            self.validate(facebook_id, facebook_token)
+            # get token or raise exception
+            return self.db_engine.auth.get_token_facebook_auth(
+                email, facebook_id, facebook_token)
+
+    # add auth processors here
     AUTH_METHODS = {
-        # auth_type: (signup_func, signin_func)
-        'simple': ('_simple_signup', '_simple_signin'),
-        'facebook': ('_facebook_signup', '_facebook_signin'),
+        # auth_type: auth_processor
+        'simple': 'simple',
+        'facebook': 'facebook',
     }
 
     def __init__(self, db_engine):
-        # process all operations via db engine
-        self.db_engine = db_engine
+        self.simple = self.SimpleMethod(db_engine)
+        self.facebook = self.FacebookMethod(db_engine)
 
-    def _auth_func(self, auth_type, func_type):
+    def _auth_processor(self, auth_type):
         """
         ckeck if selected type is allowed in config
         get and check auth func
@@ -81,44 +165,14 @@ class AuthLogic(object):
         # check for allowed methods in config
         if auth_type not in sfcd.config.AUTH_METHODS:
             raise InvalidAuthType(auth_type)
-        # get all funcs
-        auth_funcs = self.AUTH_METHODS.get(auth_type, None)
-        if not auth_funcs:
+        # get auth processor name
+        auth_processor_name = self.AUTH_METHODS.get(auth_type, None)
+        if not auth_processor_name:
             raise InvalidAuthType(auth_type)
-        # get and specific func
-        if func_type == 'signup':
-            func = auth_funcs[0]
-        elif func_type == 'signin':
-            func = auth_funcs[1]
-        else:
+        # check processor
+        if not hasattr(self, auth_processor_name):
             raise InvalidAuthType(auth_type)
-        # check func
-        if not hasattr(self, func):
-            raise InvalidAuthType(auth_type)
-        return getattr(self, func)
-
-    @staticmethod
-    def _validate_email(email):
-        if email is None:
-            raise InvalidArgument('email', email)
-        # validate via extended package "validate-email"
-        if not validate_email.validate_email(email):
-            raise InvalidArgument('email', email)
-
-    @staticmethod
-    def _validate_simple(password):
-        # ? check size
-        if password is None:
-            raise InvalidArgument('password', password)
-
-    @staticmethod
-    def _validate_facebook(facebook_id, facebook_token):
-        # not empty
-        if not facebook_id:
-            raise InvalidArgument('facebook_id', facebook_id)
-        # not empty
-        if not facebook_token:
-            raise InvalidArgument('facebook_token', facebook_token)
+        return getattr(self, auth_processor_name)
 
     def signup(self, data):
         """
@@ -140,30 +194,10 @@ class AuthLogic(object):
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            self._auth_func(auth_type, 'signup')(data)
+            self._auth_processor(auth_type).signup(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise RegistrationError(ex.message)
-
-    def _simple_signup(self, data):
-        email = data.get('email', None)
-        password = data.get('password', None)
-        # check params
-        self._validate_email(email)
-        self._validate_simple(password)
-        # add record to db
-        self.db_engine.auth.register_simple_auth(email, password)
-
-    def _facebook_signup(self, data):
-        email = data.get('email', None)
-        facebook_id = data.get('facebook_id', None)
-        facebook_token = data.get('facebook_token', None)
-        # check params
-        self._validate_email(email)
-        self._validate_facebook(facebook_id, facebook_token)
-        # add record to db
-        self.db_engine.auth.register_facebook_auth(
-            email, facebook_id, facebook_token)
 
     def signin(self, data):
         """
@@ -184,27 +218,7 @@ class AuthLogic(object):
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            return self._auth_func(auth_type, 'signin')(data)
+            return self._auth_processor(auth_type).signin(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise LoginError(ex.message)
-
-    def _simple_signin(self, data):
-        email = data.get('email', None)
-        password = data.get('password', None)
-        # check params
-        self._validate_email(email)
-        self._validate_simple(password)
-        # get token or raise exception
-        return self.db_engine.auth.get_token_simple_auth(email, password)
-
-    def _facebook_signin(self, data):
-        email = data.get('email', None)
-        facebook_id = data.get('facebook_id', None)
-        facebook_token = data.get('facebook_token', None)
-        # check params
-        self._validate_email(email)
-        self._validate_facebook(facebook_id, facebook_token)
-        # get token or raise exception
-        return self.db_engine.auth.get_token_facebook_auth(
-            email, facebook_id, facebook_token)
