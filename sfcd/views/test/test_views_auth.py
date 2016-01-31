@@ -103,7 +103,7 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        db_engine.auth.register_simple_auth(email, password)
+        db_engine.auth.simple.register(email, password)
         #
         resp = web_app.post_json(
             '/auth/signup/',
@@ -134,7 +134,7 @@ class TestAuth:
         )
         assert resp.status_code == 200
         # some token
-        assert db_engine.auth.get_token_simple_auth(email, password)
+        assert db_engine.auth.simple.get_auth_token(email, password)
 
     def test__signup__simple__invalid_password(
             self, web_app, api_secret_key, email
@@ -168,7 +168,7 @@ class TestAuth:
         )
         assert resp.status_code == 200
         # some token
-        assert db_engine.auth.get_token_facebook_auth(
+        assert db_engine.auth.facebook.get_auth_token(
             email, facebook_id, facebook_token)
 
     def test__signup__facebook__facebook_id_exitsts(
@@ -176,7 +176,7 @@ class TestAuth:
             email, email_2, facebook_id, facebook_token
     ):
         # add record to db
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(
@@ -312,10 +312,10 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        db_engine.auth.register_simple_auth(
+        db_engine.auth.simple.register(
             email, password)
         #
-        token_db = db_engine.auth.get_token_simple_auth(
+        token_db = db_engine.auth.simple.get_auth_token(
             email, password)
         #
         resp = web_app.post_json(
@@ -335,7 +335,7 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        db_engine.auth.register_simple_auth(
+        db_engine.auth.simple.register(
             email, password)
         #
         resp_1 = web_app.post_json(
@@ -365,7 +365,7 @@ class TestAuth:
             email, password
     ):
         # add record to db
-        db_engine.auth.register_simple_auth(
+        db_engine.auth.simple.register(
             email, password)
         #
         resp = web_app.post_json(
@@ -387,10 +387,10 @@ class TestAuth:
             email, facebook_id, facebook_token
     ):
         # add record to db
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
-        token_db = db_engine.auth.get_token_facebook_auth(
+        token_db = db_engine.auth.facebook.get_auth_token(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(
@@ -411,7 +411,7 @@ class TestAuth:
             email, facebook_id, facebook_token
     ):
         # add record to db
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         resp_1 = web_app.post_json(
@@ -443,7 +443,7 @@ class TestAuth:
             email, facebook_id, facebook_token
     ):
         # add record to db
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         resp = web_app.post_json(

@@ -100,7 +100,7 @@ class Manager(object):
             self.validate_email(email)
             self.validate(password)
             # add record to db
-            self.db_engine.auth.register_simple_auth(
+            self.db_engine.auth.simple.register(
                 email, password)
 
         def signin(self, data):
@@ -110,7 +110,7 @@ class Manager(object):
             self.validate_email(email)
             self.validate(password)
             # get token or raise exception
-            return self.db_engine.auth.get_token_simple_auth(
+            return self.db_engine.auth.simple.get_auth_token(
                 email, password)
 
     class FacebookMethod(BaseMethod):
@@ -131,7 +131,7 @@ class Manager(object):
             self.validate_email(email)
             self.validate(facebook_id, facebook_token)
             # add record to db
-            self.db_engine.auth.register_facebook_auth(
+            self.db_engine.auth.facebook.register(
                 email, facebook_id, facebook_token)
 
         def signin(self, data):
@@ -142,7 +142,7 @@ class Manager(object):
             self.validate_email(email)
             self.validate(facebook_id, facebook_token)
             # get token or raise exception
-            return self.db_engine.auth.get_token_facebook_auth(
+            return self.db_engine.auth.facebook.get_auth_token(
                 email, facebook_id, facebook_token)
 
     # add auth processors here

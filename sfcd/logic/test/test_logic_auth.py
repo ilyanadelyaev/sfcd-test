@@ -97,7 +97,7 @@ class TestManager:
         """
         cover processor exception with RegistrationError
         """
-        db_engine.auth.register_simple_auth(email, password)
+        db_engine.auth.simple.register(email, password)
         #
         with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
             manager.signup({
@@ -241,7 +241,7 @@ class TestSimpleMethod:
             self, db_engine, manager,
             email, password
     ):
-        db_engine.auth.register_simple_auth(email, password)
+        db_engine.auth.simple.register(email, password)
         #
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             manager.simple.signup({
@@ -260,7 +260,7 @@ class TestSimpleMethod:
             'password': password,
         })
         # exists
-        assert db_engine.auth.get_token_simple_auth(
+        assert db_engine.auth.simple.get_auth_token(
             email, password)
 
     def test__signin__invalid_args(
@@ -307,7 +307,7 @@ class TestSimpleMethod:
             email, password
     ):
         # create record
-        db_engine.auth.register_simple_auth(email, password)
+        db_engine.auth.simple.register(email, password)
         #
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
             manager.simple.signin({
@@ -322,14 +322,14 @@ class TestSimpleMethod:
             email, password
     ):
         # create record
-        db_engine.auth.register_simple_auth(email, password)
+        db_engine.auth.simple.register(email, password)
         #
         token = manager.simple.signin({
             'email': email,
             'password': password,
         })
         #
-        token_db = db_engine.auth.get_token_simple_auth(
+        token_db = db_engine.auth.simple.get_auth_token(
             email, password)
         #
         assert len(token) == sfcd.misc.Crypto.auth_token_length
@@ -340,7 +340,7 @@ class TestSimpleMethod:
             email, password
     ):
         # create record
-        db_engine.auth.register_simple_auth(email, password)
+        db_engine.auth.simple.register(email, password)
         #
         token_1 = manager.simple.signin({
             'email': email,
@@ -430,7 +430,7 @@ class TestFacebookMethod:
             self, db_engine, manager,
             email, facebook_id, facebook_token
     ):
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
@@ -471,7 +471,7 @@ class TestFacebookMethod:
             'facebook_token': facebook_token,
         })
         # exists
-        assert db_engine.auth.get_token_facebook_auth(
+        assert db_engine.auth.facebook.get_auth_token(
             email, facebook_id, facebook_token)
 
     def test__signin__invalid_args(
@@ -521,7 +521,7 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token
     ):
         # create record
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
@@ -538,7 +538,7 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token
     ):
         # create record
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         with pytest.raises(sfcd.db.exc.AuthError) as ex_info:
@@ -555,7 +555,7 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token
     ):
         # create record
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         token = manager.facebook.signin({
@@ -564,7 +564,7 @@ class TestFacebookMethod:
             'facebook_token': facebook_token,
         })
         #
-        token_db = db_engine.auth.get_token_facebook_auth(
+        token_db = db_engine.auth.facebook.get_auth_token(
             email, facebook_id, facebook_token)
         #
         assert len(token) == sfcd.misc.Crypto.auth_token_length
@@ -575,7 +575,7 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token
     ):
         # create record
-        db_engine.auth.register_facebook_auth(
+        db_engine.auth.facebook.register(
             email, facebook_id, facebook_token)
         #
         token_1 = manager.facebook.signin({

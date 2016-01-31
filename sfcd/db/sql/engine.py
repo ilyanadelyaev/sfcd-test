@@ -18,6 +18,8 @@ class DBEngine(object):
     def __init__(self, engine_url):
         self.engine, self.session_maker = \
             self.init_engine(engine_url=engine_url)
+        #
+        self.auth = auth.Manager(self.session_maker)
 
     @staticmethod
     def init_engine(engine_url):
@@ -34,14 +36,3 @@ class DBEngine(object):
         # get session maker
         Session = sqlalchemy.orm.sessionmaker(bind=Engine)
         return Engine, Session
-
-    @property
-    def auth(self):
-        """
-        auth manager lazy
-        """
-        # pylint: disable=E0203
-        # because magic
-        if not hasattr(self, '_auth') or self._auth is None:
-            self._auth = auth.AuthManager(self.session_maker)
-        return self._auth
