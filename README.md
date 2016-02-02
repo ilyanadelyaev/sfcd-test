@@ -12,7 +12,7 @@ Additionally auth via Facebook.
 ## Init
 ```
 [sudo] pip install virtualenv
-./init.sh
+./sh/init.sh
 source venv/bin/activate
 ```
 
@@ -21,22 +21,22 @@ source venv/bin/activate
 * pep8
 * pylint
 ```
-./test.sh
+./sh/test.sh
 ```
 
 ## Run
 ```
-./run.sh
+./sh/run.sh
 ```
 
 ## Test shots
 ```
-console_0 $ ./run.sh
-console_1 $ ./test_shots.sh
+console_0 $ ./sh/run.sh
+console_1 $ ./sh/shots.sh
 ```
 
 ## Clean
 ```
 deactivate
-./clean.sh
+./sh/clean.sh
 ```
