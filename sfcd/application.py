@@ -1,9 +1,11 @@
 import os
+import argparse
 import logging
 import logging.handlers
 
 import flask
 
+import sfcd.misc.config
 import sfcd.db.common
 import sfcd.logic.controller
 import sfcd.views.registry
@@ -131,3 +133,36 @@ class Application(object):
             ),
             config.system.logger.level,
         )
+
+
+if __name__ == '__main__':
+    # command line arguments parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config',
+        required=True,
+        help='path to application config',
+    )
+    args = parser.parse_args()
+
+    # create system config
+    config = sfcd.misc.config.Config(args.config)
+
+    # second param for tests so skip it
+    flask_app, _ = \
+        Application.setup_application(config)
+
+    # after Application.setup_application
+    logger = logging.getLogger('sfcd')
+    #
+    logger.info('Initialized')
+    logger.info('Config: "{}"'.format(config))
+
+    # run web-view
+    flask_app.run(
+        host=config.system.flask.host,
+        port=config.system.flask.port,
+        debug=int(config.system.flask.debug),
+    )
+
+    logger.info('Terminate')
