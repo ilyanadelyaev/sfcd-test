@@ -8,20 +8,12 @@ import sfcd.application
 
 
 @pytest.fixture(scope='session')
-def app_objects(
-        sql_engine_url, mongo_engine_url, option_db
-):
+def app_objects(config):
     """
     Kind a hack to initialize web_app and db_engine separately
     """
-    db_type = option_db
-    db_url = None
-    if db_type == 'sql':
-        db_url = sql_engine_url
-    elif db_type == 'mongo':
-        db_url = mongo_engine_url
     flask_app, db_engine = \
-        sfcd.application.Application.setup_application(db_type, db_url)
+        sfcd.application.Application.setup_application(config)
     return flask_app, db_engine
 
 

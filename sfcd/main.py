@@ -1,3 +1,4 @@
+import argparse
 import logging
 
 import sfcd.application
@@ -8,26 +9,31 @@ logger = logging.getLogger('sfcd')
 
 
 if __name__ == '__main__':
-    # get db params from config
-    db_type = sfcd.config.DB_TYPE
-    db_url = None
-    if sfcd.config.DB_TYPE == 'sql':
-        db_url = sfcd.config.SQL_DB_URL
-    elif sfcd.config.DB_TYPE == 'mongo':
-        db_url = sfcd.config.MONGO_DB_URL
+    # command line arguments parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '--config',
+        required=True,
+        help='path to application config',
+    )
+    args = parser.parse_args()
 
+    # create system config
+    config = sfcd.config.Config(args.config)
+
+    # second param for tests so skip it
     flask_app, _ = \
-        sfcd.application.Application.setup_application(db_type, db_url)
+        sfcd.application.Application.setup_application(config)
 
     # after Application.setup_application
     logger.info('Initialized')
-    logger.info('DB config: {} : {}'.format(db_url, db_url))
+    logger.info('Config: "{}"'.format(config))
 
     # run web-view
     flask_app.run(
-        host=sfcd.config.FLASK_HOST,
-        port=sfcd.config.FLASK_PORT,
-        debug=sfcd.config.FLASK_DEBUG,
+        host=config.system.flask.host,
+        port=config.system.flask.port,
+        debug=int(config.system.flask.debug),
     )
 
     logger.info('Terminate')

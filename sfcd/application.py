@@ -1,12 +1,12 @@
+import os
 import logging
 import logging.handlers
 
 import flask
 
-import sfcd.db.sql.engine
+import sfcd.db.common
 import sfcd.logic.controller
 import sfcd.views.registry
-import sfcd.config
 
 
 class Application(object):
@@ -15,7 +15,7 @@ class Application(object):
     """
 
     @classmethod
-    def setup_application(cls, db_type, db_url):
+    def setup_application(cls, config):
         """
         - Initialize database engine
           based on config settings
@@ -28,12 +28,7 @@ class Application(object):
         return :flask_app:, :db_engine:
         use :db_engine: only for test needs
         """
-        # database engine
-        if db_type == 'sql':
-            db_engine = sfcd.db.sql.engine.DBEngine(db_url)
-        elif db_type == 'mongo':
-            # db_engine = sfcd.db.mongo.DBEngine(db_url)
-            pass
+        db_engine = sfcd.db.common.get_db_engine(config)
 
         # logic controller
         controller = sfcd.logic.controller.Controller(db_engine)
@@ -44,10 +39,10 @@ class Application(object):
 
         # globals
         sfcd.views.registry.register_flask_before_request(
-            flask_app, controller)
+            config, flask_app, controller)
 
         # logging
-        cls.setup_logging(flask_app)
+        cls._setup_logging(config, flask_app)
 
         # return db_engine only for test needs
         return flask_app, db_engine
@@ -82,37 +77,56 @@ class Application(object):
         log.addHandler(fh)
 
     @classmethod
-    def setup_logging(cls, flask_app):
+    def _setup_logging(cls, config, flask_app):
         """
         Setup components logs
         """
+        # ensure dirs
+        if not os.path.exists(config.system.logger.path):
+            os.makedirs(config.system.logger.path)
+
         # sql log: sqlalchemy
         cls._setup_logger(
             'sqlalchemy',
-            sfcd.config.LOG_FILENAME__SQL,
-            sfcd.config.LOG_LEVEL,
+            os.path.join(
+                config.system.logger.path,
+                config.system.logger.sql
+            ),
+            config.system.logger.level,
         )
         # flask log
         flask_app.logger.addHandler(cls._logging_file_handler(
-            sfcd.config.LOG_FILENAME__SYSTEM,
-            sfcd.config.LOG_LEVEL,
+            os.path.join(
+                config.system.logger.path,
+                config.system.logger.system
+            ),
+            config.system.logger.level,
         ))
-        flask_app.logger.setLevel(sfcd.config.LOG_LEVEL)
+        flask_app.logger.setLevel(config.system.logger.level)
         # view log: werkzeug
         cls._setup_logger(
             'werkzeug',
-            sfcd.config.LOG_FILENAME__SYSTEM,
-            sfcd.config.LOG_LEVEL,
+            os.path.join(
+                config.system.logger.path,
+                config.system.logger.system
+            ),
+            config.system.logger.level,
         )
         # view log: view
         cls._setup_logger(
             'view',
-            sfcd.config.LOG_FILENAME__VIEW,
-            sfcd.config.LOG_LEVEL,
+            os.path.join(
+                config.system.logger.path,
+                config.system.logger.view
+            ),
+            config.system.logger.level,
         )
         # app log: sfcd
         cls._setup_logger(
             'sfcd',
-            sfcd.config.LOG_FILENAME__APP,
-            sfcd.config.LOG_LEVEL,
+            os.path.join(
+                config.system.logger.path,
+                config.system.logger.app
+            ),
+            config.system.logger.level,
         )

@@ -2,7 +2,6 @@ import logging
 
 import flask
 
-import sfcd.config
 import sfcd.logic.exc
 
 
@@ -30,7 +29,10 @@ def auth_signup():
 
     try:
         # call logic.auth.signup via logic.controller
-        flask.g.controller.auth.signup(flask.request.json)
+        flask.g.controller.auth.signup(
+            flask.g.config,
+            flask.request.json,
+        )
     except sfcd.logic.exc.LogicError as ex:
         logger.exception(ex)
         resp_data = {'error': str(ex)}
@@ -54,7 +56,10 @@ def auth_signin():
 
     try:
         # call logic.auth.signin via logic.controller
-        token = flask.g.controller.auth.signin(flask.request.json)
+        token = flask.g.controller.auth.signin(
+            flask.g.config,
+            flask.request.json,
+        )
         resp_data = {'auth_token': token}
     except sfcd.logic.exc.LogicError as ex:
         logger.exception(ex)

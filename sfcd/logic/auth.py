@@ -3,7 +3,6 @@ import validate_email  # external package
 import sfcd.db.exc
 import sfcd.logic.common
 import sfcd.logic.exc
-import sfcd.config
 
 
 class AuthError(sfcd.logic.exc.LogicError):
@@ -156,14 +155,14 @@ class Manager(object):
         self.simple = self.SimpleMethod(db_engine)
         self.facebook = self.FacebookMethod(db_engine)
 
-    def _auth_processor(self, auth_type):
+    def _auth_processor(self, config, auth_type):
         """
         ckeck if selected type is allowed in config
         get and check auth func
         :func: 'signup' or 'signin'
         """
         # check for allowed methods in config
-        if auth_type not in sfcd.config.AUTH_METHODS:
+        if auth_type not in config.api.auth.allowed_methods:
             raise InvalidAuthType(auth_type)
         # get auth processor name
         auth_processor_name = self.AUTH_METHODS.get(auth_type, None)
@@ -174,7 +173,7 @@ class Manager(object):
             raise InvalidAuthType(auth_type)
         return getattr(self, auth_processor_name)
 
-    def signup(self, data):
+    def signup(self, config, data):
         """
         check secret
         check auth type
@@ -189,17 +188,17 @@ class Manager(object):
 
         # keep this method on secret side
         # check api secret key
-        sfcd.logic.common.validate_secret_key(data)
+        sfcd.logic.common.validate_secret_key(config, data)
 
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            self._auth_processor(auth_type).signup(data)
+            self._auth_processor(config, auth_type).signup(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise RegistrationError(ex.message)
 
-    def signin(self, data):
+    def signin(self, config, data):
         """
         check secret
         check email
@@ -213,12 +212,12 @@ class Manager(object):
 
         # keep this method on secret side
         # check api secret key
-        sfcd.logic.common.validate_secret_key(data)
+        sfcd.logic.common.validate_secret_key(config, data)
 
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            return self._auth_processor(auth_type).signin(data)
+            return self._auth_processor(config, auth_type).signin(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise LoginError(ex.message)

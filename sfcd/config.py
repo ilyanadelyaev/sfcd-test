@@ -1,31 +1,17 @@
-# View
-
-API_SECRET_KEY = 'f556bae6-abd5-42b3-b5d4-e4e340f811c7'
+import configure
 
 
-# DB
+class Config(object):
+    def __init__(self, file_name):
+        self.__config = configure.Configuration.from_file(
+            file_name).configure()
 
-DB_TYPE = 'sql'  # sql / mongo
-SQL_DB_URL = 'sqlite:///:memory:'
-MONGO_DB_URL = None
+    def __str__(self):
+        return str(self.__config)
 
-
-# Auth
-
-AUTH_METHODS = ('simple', 'facebook')
-
-
-# Log
-
-LOG_LEVEL = 'DEBUG'
-LOG_FILENAME__SYSTEM = './logs/system.log'
-LOG_FILENAME__APP = './logs/app.log'
-LOG_FILENAME__SQL = './logs/sql.log'
-LOG_FILENAME__VIEW = './logs/view.log'
-
-
-# Flask
-
-FLASK_HOST = 'localhost'
-FLASK_PORT = 8080
-FLASK_DEBUG = False
+    def __getattr__(self, attr):
+        if not hasattr(self.__config, attr):
+            raise AttributeError(
+                "{} instance has no attribute '{}'".format(
+                    self.__config.__class__.__name__, attr))
+        return getattr(self.__config, attr)

@@ -1,0 +1,25 @@
+# YAML
+
+db:
+    type: sql
+    url: 'sqlite:///:memory:'
+
+api:
+    secret: 'f556bae6-abd5-42b3-b5d4-e4e340f811c7'
+    auth:
+        allowed_methods:
+        - simple
+        - facebook
+
+system:
+    flask:
+        host: localhost
+        port: 8080
+        debug: 0
+    logger:
+        level: DEBUG
+        path: ./logs/
+        system: system.log
+        app: app.log
+        sql: sql.log
+        view: view.log

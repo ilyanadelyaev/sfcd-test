@@ -17,7 +17,7 @@ def register_views(flask_app):
         v.register_view(flask_app)
 
 
-def register_flask_before_request(flask_app, controller):
+def register_flask_before_request(config, flask_app, controller):
     """
     Register here all specific methods per-request call
     """
@@ -27,7 +27,8 @@ def register_flask_before_request(flask_app, controller):
         flask.g.request_id = str(uuid.uuid4())
 
     @flask_app.before_request
-    def controller_to_g():
+    def system_to_g():
+        flask.g.config = config
         flask.g.controller = controller
 
     @flask_app.before_request

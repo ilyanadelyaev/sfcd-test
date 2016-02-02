@@ -3,7 +3,7 @@ import uuid
 import pytest
 
 import sfcd.config
-import sfcd.db.sql.engine
+import sfcd.db.common
 
 
 ########################################
@@ -13,8 +13,8 @@ import sfcd.db.sql.engine
 # auth data
 
 @pytest.fixture(scope='session')
-def api_secret_key():
-    return sfcd.config.API_SECRET_KEY
+def api_secret_key(config):
+    return config.api.secret
 
 
 @pytest.fixture
@@ -52,24 +52,18 @@ def facebook_token():
     return str(uuid.uuid4())
 
 
-# DB's
+# config
 
 @pytest.fixture(scope='session')
-def sql_engine_url():
-    return 'sqlite:///:memory:'
-
-
-@pytest.fixture(scope='session')
-def mongo_engine_url():
-    return 'mongodb://localhost/database_name'
-
-
-@pytest.fixture(scope='session')
-def db_engine(
-        sql_engine_url, mongo_engine_url, option_db
-):
+def config(option_db):
     if option_db == 'sql':
-        return sfcd.db.sql.engine.DBEngine(sql_engine_url)
+        return sfcd.config.Config('./config/test.sql.yaml')
     elif option_db == 'mongo':
-        return None
-        # return sfcd.db.mongo.DBEngine(mongo_engine_url)
+        return sfcd.config.Config('./config/test.mongo.yaml')
+
+
+# db
+
+@pytest.fixture(scope='session')
+def db_engine(config):
+    return sfcd.db.common.get_db_engine(config)

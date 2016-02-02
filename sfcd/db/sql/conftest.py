@@ -5,12 +5,12 @@ import sfcd.db.sql.base
 
 
 @pytest.fixture(scope='session')
-def session_maker(sql_engine_url):
+def session_maker(config):
     """
     init engine and return session maker
     """
     _, _session_maker = sfcd.db.sql.engine.DBEngine.init_engine(
-        engine_url=sql_engine_url)
+        engine_url=config.db.url)
     return _session_maker
 
 
