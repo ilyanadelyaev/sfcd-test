@@ -1,4 +1,4 @@
-from . import auth
+import sfcd.logic.auth.manager
 
 
 class Controller(object):
@@ -8,4 +8,4 @@ class Controller(object):
     """
 
     def __init__(self, db_engine):
-        self.auth = auth.Manager(db_engine)
+        self.auth = sfcd.logic.auth.manager.Manager(db_engine)

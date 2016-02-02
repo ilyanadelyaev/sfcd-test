@@ -1,13 +1,17 @@
 import pytest
 
 import sfcd.db.exc
-import sfcd.logic.auth
 import sfcd.logic.exc
+import sfcd.logic.auth.exc
+import sfcd.logic.auth.base
+import sfcd.logic.auth.manager
+import sfcd.logic.auth.simple
+import sfcd.logic.auth.facebook
 
 
 @pytest.fixture(scope='session')
 def manager(db_engine):
-    return sfcd.logic.auth.Manager(db_engine)
+    return sfcd.logic.auth.manager.Manager(db_engine)
 
 
 class TestManager:
@@ -24,12 +28,12 @@ class TestManager:
         """
         assert isinstance(
             manager.simple,
-            sfcd.logic.auth.Manager.SimpleMethod
+            sfcd.logic.auth.simple.SimpleMethod
         )
         #
         assert isinstance(
             manager.facebook,
-            sfcd.logic.auth.Manager.FacebookMethod
+            sfcd.logic.auth.facebook.FacebookMethod
         )
 
     def test__auth_processor(self, config, manager):
@@ -39,16 +43,16 @@ class TestManager:
         processor = manager._auth_processor(config, 'simple')
         assert isinstance(
             processor,
-            sfcd.logic.auth.Manager.SimpleMethod
+            sfcd.logic.auth.simple.SimpleMethod
         )
         #
         processor = manager._auth_processor(config, 'facebook')
         assert isinstance(
             processor,
-            sfcd.logic.auth.Manager.FacebookMethod
+            sfcd.logic.auth.facebook.FacebookMethod
         )
         #
-        with pytest.raises(sfcd.logic.auth.InvalidAuthType) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidAuthType) as ex_info:
             manager._auth_processor(config, 'invalid')
         assert ex_info.value.message == \
             'Invalid auth type: "invalid"'
@@ -71,12 +75,12 @@ class TestManager:
         """
         check for empty input
         """
-        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.RegistrationError) as ex_info:
             manager.signup(None, None)
         assert ex_info.value.message == \
             'Registration error with: "empty data"'
         #
-        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.RegistrationError) as ex_info:
             manager.signup(None, {})
         assert ex_info.value.message == \
             'Registration error with: "empty data"'
@@ -85,7 +89,7 @@ class TestManager:
         """
         invalid auth method
         """
-        with pytest.raises(sfcd.logic.auth.InvalidAuthType) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidAuthType) as ex_info:
             manager.signup(
                 config,
                 {
@@ -105,7 +109,7 @@ class TestManager:
         """
         db_engine.auth.simple.register(email, password)
         #
-        with pytest.raises(sfcd.logic.auth.RegistrationError) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.RegistrationError) as ex_info:
             manager.signup(
                 config,
                 {
@@ -136,12 +140,12 @@ class TestManager:
         """
         check for empty input
         """
-        with pytest.raises(sfcd.logic.auth.LoginError) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.LoginError) as ex_info:
             manager.signin(None, None)
         assert ex_info.value.message == \
             'Login error with: "empty data"'
         #
-        with pytest.raises(sfcd.logic.auth.LoginError) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.LoginError) as ex_info:
             manager.signin(None, {})
         assert ex_info.value.message == \
             'Login error with: "empty data"'
@@ -150,7 +154,7 @@ class TestManager:
         """
         invalid auth method
         """
-        with pytest.raises(sfcd.logic.auth.InvalidAuthType) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidAuthType) as ex_info:
             manager.signin(
                 config,
                 {
@@ -168,7 +172,7 @@ class TestManager:
         """
         cover processor exception with LoginError
         """
-        with pytest.raises(sfcd.logic.auth.LoginError) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.LoginError) as ex_info:
             manager.signin(
                 config,
                 {
@@ -185,41 +189,41 @@ class TestManager:
 
 class TestBaseMethod:
     def test__validate_email(self, manager, email, email_2):
-        assert manager.BaseMethod.validate_email(email) is None
-        assert manager.BaseMethod.validate_email(email_2) is None
-        assert manager.BaseMethod.validate_email(
+        assert sfcd.logic.auth.base.BaseMethod.validate_email(email) is None
+        assert sfcd.logic.auth.base.BaseMethod.validate_email(email_2) is None
+        assert sfcd.logic.auth.base.BaseMethod.validate_email(
             'me@example.com') is None
-        assert manager.BaseMethod.validate_email(
+        assert sfcd.logic.auth.base.BaseMethod.validate_email(
             'me.and.you@example.com') is None
         #
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
-            manager.BaseMethod.validate_email('example')
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
+            sfcd.logic.auth.base.BaseMethod.validate_email('example')
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', 'example')
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
-            manager.BaseMethod.validate_email('example.com')
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
+            sfcd.logic.auth.base.BaseMethod.validate_email('example.com')
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', 'example.com')
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
-            manager.BaseMethod.validate_email('@example.com')
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
+            sfcd.logic.auth.base.BaseMethod.validate_email('@example.com')
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', '@example.com')
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
-            manager.BaseMethod.validate_email('.@example.com')
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
+            sfcd.logic.auth.base.BaseMethod.validate_email('.@example.com')
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', '.@example.com')
 
     def test__validate(self, manager):
         with pytest.raises(NotImplementedError):
-            manager.BaseMethod(None).validate()
+            sfcd.logic.auth.base.BaseMethod(None).validate()
 
     def test__signup(self, manager):
         with pytest.raises(NotImplementedError):
-            manager.BaseMethod(None).signup()
+            sfcd.logic.auth.base.BaseMethod(None).signup()
 
     def test__signin(self, manager):
         with pytest.raises(NotImplementedError):
-            manager.BaseMethod(None).signin()
+            sfcd.logic.auth.base.BaseMethod(None).signin()
 
 
 class TestSimpleMethod:
@@ -229,7 +233,7 @@ class TestSimpleMethod:
     ):
         assert manager.simple.validate(password) is None
         #
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.simple.validate(None)
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('password', None)
@@ -239,7 +243,7 @@ class TestSimpleMethod:
             email, password
     ):
         # invalid email
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.simple.signup({
                 'email': 'invalid',
                 'password': password,
@@ -247,7 +251,7 @@ class TestSimpleMethod:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', 'invalid')
         # invalid password
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.simple.signup({
                 'email': email,
                 'password': None,
@@ -286,14 +290,14 @@ class TestSimpleMethod:
             email, password
     ):
         # invalid email
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.simple.signin({
                 'email': 'invalid',
             })
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', 'invalid')
         # none password
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.simple.signin({
                 'email': email,
                 'password': None
@@ -301,7 +305,7 @@ class TestSimpleMethod:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('password', None)
         # no password
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.simple.signin({
                 'email': email,
             })
@@ -396,11 +400,11 @@ class TestFacebookMethod:
             facebook_id, facebook_token
         ) is None
         #
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.validate('', facebook_token)
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('facebook_id', '')
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.validate(facebook_id, None)
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('facebook_token', None)
@@ -410,7 +414,7 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token
     ):
         # invalid email
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signup({
                 'email': 'invalid',
                 'facebook_id': facebook_id,
@@ -419,7 +423,7 @@ class TestFacebookMethod:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', 'invalid')
         # invalid facebook_id
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signup({
                 'email': email,
                 'facebook_id': '',
@@ -428,7 +432,7 @@ class TestFacebookMethod:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('facebook_id', '')
         # invalid facebook_token
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signup({
                 'email': email,
                 'facebook_id': facebook_id,
@@ -437,7 +441,7 @@ class TestFacebookMethod:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('facebook_token', None)
         # no facebook args
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signup({
                 'email': email,
             })
@@ -497,14 +501,14 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token
     ):
         # invalid email
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signin({
                 'email': 'invalid',
             })
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('email', 'invalid')
         # none facebook
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signin({
                 'email': email,
                 'facebook_id': '',
@@ -513,7 +517,7 @@ class TestFacebookMethod:
         assert ex_info.value.message == \
             'Ivalid argument {} = "{}"'.format('facebook_id', '')
         # no facebook params
-        with pytest.raises(sfcd.logic.auth.InvalidArgument) as ex_info:
+        with pytest.raises(sfcd.logic.auth.exc.InvalidArgument) as ex_info:
             manager.facebook.signin({
                 'email': email,
                 'facebook_id': facebook_id,
