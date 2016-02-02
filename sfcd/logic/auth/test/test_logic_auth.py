@@ -10,8 +10,8 @@ import sfcd.logic.auth.facebook
 
 
 @pytest.fixture(scope='session')
-def manager(db_engine):
-    return sfcd.logic.auth.manager.Manager(db_engine)
+def manager(config, db_engine):
+    return sfcd.logic.auth.manager.Manager(config, db_engine)
 
 
 class TestManager:
@@ -36,38 +36,35 @@ class TestManager:
             sfcd.logic.auth.facebook.FacebookMethod
         )
 
-    def test__auth_processor(self, config, manager):
+    def test__auth_processor(self, manager):
         """
         _auth_processor returns processor or raise
         """
-        processor = manager._auth_processor(config, 'simple')
+        processor = manager._auth_processor('simple')
         assert isinstance(
             processor,
             sfcd.logic.auth.simple.SimpleMethod
         )
         #
-        processor = manager._auth_processor(config, 'facebook')
+        processor = manager._auth_processor('facebook')
         assert isinstance(
             processor,
             sfcd.logic.auth.facebook.FacebookMethod
         )
         #
         with pytest.raises(sfcd.logic.auth.exc.InvalidAuthType) as ex_info:
-            manager._auth_processor(config, 'invalid')
+            manager._auth_processor('invalid')
         assert ex_info.value.message == \
             'Invalid auth type: "invalid"'
 
-    def test__signup__invalid_secret(self, config, manager):
+    def test__signup__invalid_secret(self, manager):
         """
         invalid secret key
         """
         with pytest.raises(sfcd.logic.exc.InvalidSecretKey) as ex_info:
-            manager.signup(
-                config,
-                {
-                    'secret': 'invalid',
-                }
-            )
+            manager.signup({
+                'secret': 'invalid',
+            })
         assert ex_info.value.message == \
             'Invalid secret key: "invalid"'
 
@@ -76,32 +73,29 @@ class TestManager:
         check for empty input
         """
         with pytest.raises(sfcd.logic.auth.exc.RegistrationError) as ex_info:
-            manager.signup(None, None)
+            manager.signup(None)
         assert ex_info.value.message == \
             'Registration error with: "empty data"'
         #
         with pytest.raises(sfcd.logic.auth.exc.RegistrationError) as ex_info:
-            manager.signup(None, {})
+            manager.signup({})
         assert ex_info.value.message == \
             'Registration error with: "empty data"'
 
-    def test__signup__ivalid_auth_type(self, config, manager, api_secret_key):
+    def test__signup__ivalid_auth_type(self, manager, api_secret_key):
         """
         invalid auth method
         """
         with pytest.raises(sfcd.logic.auth.exc.InvalidAuthType) as ex_info:
-            manager.signup(
-                config,
-                {
-                    'secret': api_secret_key,
-                    'type': 'invalid',
-                }
-            )
+            manager.signup({
+                'secret': api_secret_key,
+                'type': 'invalid',
+            })
         assert ex_info.value.message == \
             'Invalid auth type: "invalid"'
 
     def test__signup__raises_registration_error(
-            self, config, db_engine, manager, api_secret_key,
+            self, db_engine, manager, api_secret_key,
             email, password
     ):
         """
@@ -110,29 +104,23 @@ class TestManager:
         db_engine.auth.simple.register(email, password)
         #
         with pytest.raises(sfcd.logic.auth.exc.RegistrationError) as ex_info:
-            manager.signup(
-                config,
-                {
-                    'secret': api_secret_key,
-                    'type': 'simple',
-                    'email': email,
-                    'password': password,
-                }
-            )
+            manager.signup({
+                'secret': api_secret_key,
+                'type': 'simple',
+                'email': email,
+                'password': password,
+            })
         assert ex_info.value.message == \
             'Registration error with: "email "{}" exists"'.format(email)
 
-    def test__signin__invalid_secret(self, config, manager):
+    def test__signin__invalid_secret(self, manager):
         """
         invalid secret key
         """
         with pytest.raises(sfcd.logic.exc.InvalidSecretKey) as ex_info:
-            manager.signin(
-                config,
-                {
-                    'secret': 'invalid',
-                }
-            )
+            manager.signin({
+                'secret': 'invalid',
+            })
         assert ex_info.value.message == \
             'Invalid secret key: "invalid"'
 
@@ -141,48 +129,42 @@ class TestManager:
         check for empty input
         """
         with pytest.raises(sfcd.logic.auth.exc.LoginError) as ex_info:
-            manager.signin(None, None)
+            manager.signin(None)
         assert ex_info.value.message == \
             'Login error with: "empty data"'
         #
         with pytest.raises(sfcd.logic.auth.exc.LoginError) as ex_info:
-            manager.signin(None, {})
+            manager.signin({})
         assert ex_info.value.message == \
             'Login error with: "empty data"'
 
-    def test__signin__ivalid_auth_type(self, config, manager, api_secret_key):
+    def test__signin__ivalid_auth_type(self, manager, api_secret_key):
         """
         invalid auth method
         """
         with pytest.raises(sfcd.logic.auth.exc.InvalidAuthType) as ex_info:
-            manager.signin(
-                config,
-                {
-                    'secret': api_secret_key,
-                    'type': 'invalid',
-                }
-            )
+            manager.signin({
+                'secret': api_secret_key,
+                'type': 'invalid',
+            })
         assert ex_info.value.message == \
             'Invalid auth type: "invalid"'
 
     def test__signin__raises_login_error(
-            self, config, manager, api_secret_key,
+            self, manager, api_secret_key,
             email, facebook_id, facebook_token
     ):
         """
         cover processor exception with LoginError
         """
         with pytest.raises(sfcd.logic.auth.exc.LoginError) as ex_info:
-            manager.signin(
-                config,
-                {
-                    'secret': api_secret_key,
-                    'type': 'facebook',
-                    'email': email,
-                    'facebook_id': facebook_id,
-                    'facebook_token': facebook_token,
-                }
-            )
+            manager.signin({
+                'secret': api_secret_key,
+                'type': 'facebook',
+                'email': email,
+                'facebook_id': facebook_id,
+                'facebook_token': facebook_token,
+            })
         assert ex_info.value.message == \
             'Login error with: "email "{}" not exists"'.format(email)
 

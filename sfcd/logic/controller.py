@@ -7,5 +7,6 @@ class Controller(object):
     Using in requests via flask.g
     """
 
-    def __init__(self, db_engine):
-        self.auth = sfcd.logic.auth.manager.Manager(db_engine)
+    def __init__(self, config, db_engine):
+        self.auth = sfcd.logic.auth.manager.Manager(
+            config, db_engine)

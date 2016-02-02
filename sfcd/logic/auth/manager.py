@@ -22,18 +22,20 @@ class Manager(object):
         'facebook': 'facebook',
     }
 
-    def __init__(self, db_engine):
+    def __init__(self, config, db_engine):
+        self.config = config
+        #
         self.simple = sfcd.logic.auth.simple.SimpleMethod(db_engine)
         self.facebook = sfcd.logic.auth.facebook.FacebookMethod(db_engine)
 
-    def _auth_processor(self, config, auth_type):
+    def _auth_processor(self, auth_type):
         """
         ckeck if selected type is allowed in config
         get and check auth func
         :func: 'signup' or 'signin'
         """
         # check for allowed methods in config
-        if auth_type not in config.api.auth.allowed_methods:
+        if auth_type not in self.config.api.auth.allowed_methods:
             raise sfcd.logic.auth.exc.InvalidAuthType(auth_type)
         # get auth processor name
         auth_processor_name = self.AUTH_METHODS.get(auth_type, None)
@@ -44,7 +46,7 @@ class Manager(object):
             raise sfcd.logic.auth.exc.InvalidAuthType(auth_type)
         return getattr(self, auth_processor_name)
 
-    def signup(self, config, data):
+    def signup(self, data):
         """
         check secret
         check auth type
@@ -59,17 +61,18 @@ class Manager(object):
 
         # keep this method on secret side
         # check api secret key
-        sfcd.logic.common.validate_secret_key(config, data)
+        sfcd.logic.common.validate_secret_key(
+            self.config.api.secret, data)
 
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            self._auth_processor(config, auth_type).signup(data)
+            self._auth_processor(auth_type).signup(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise sfcd.logic.auth.exc.RegistrationError(ex.message)
 
-    def signin(self, config, data):
+    def signin(self, data):
         """
         check secret
         check email
@@ -83,12 +86,13 @@ class Manager(object):
 
         # keep this method on secret side
         # check api secret key
-        sfcd.logic.common.validate_secret_key(config, data)
+        sfcd.logic.common.validate_secret_key(
+            self.config.api.secret, data)
 
         # call specific function
         auth_type = data.get('type', 'simple')
         try:
-            return self._auth_processor(config, auth_type).signin(data)
+            return self._auth_processor(auth_type).signin(data)
         except sfcd.db.exc.AuthError as ex:
             # hide db exception here for human-readable
             raise sfcd.logic.auth.exc.LoginError(ex.message)

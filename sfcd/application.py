@@ -31,7 +31,8 @@ class Application(object):
         db_engine = sfcd.db.common.get_db_engine(config)
 
         # logic controller
-        controller = sfcd.logic.controller.Controller(db_engine)
+        controller = sfcd.logic.controller.Controller(
+            config, db_engine)
 
         # flask app
         flask_app = flask.Flask('sfcd')
@@ -39,7 +40,7 @@ class Application(object):
 
         # globals
         sfcd.views.registry.register_flask_before_request(
-            config, flask_app, controller)
+            flask_app, controller)
 
         # logging
         cls._setup_logging(config, flask_app)

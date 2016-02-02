@@ -30,7 +30,6 @@ def auth_signup():
     try:
         # call logic.auth.signup via logic.controller
         flask.g.controller.auth.signup(
-            flask.g.config,
             flask.request.json,
         )
     except sfcd.logic.exc.LogicError as ex:
@@ -57,7 +56,6 @@ def auth_signin():
     try:
         # call logic.auth.signin via logic.controller
         token = flask.g.controller.auth.signin(
-            flask.g.config,
             flask.request.json,
         )
         resp_data = {'auth_token': token}
