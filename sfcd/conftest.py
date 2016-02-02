@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-import sfcd.config
+import sfcd.misc.config
 import sfcd.db.common
 
 
@@ -57,9 +57,9 @@ def facebook_token():
 @pytest.fixture(scope='session')
 def config(option_db):
     if option_db == 'sql':
-        return sfcd.config.Config('./config/test.sql.yaml')
+        return sfcd.misc.config.Config('./config/test.sql.yaml')
     elif option_db == 'mongo':
-        return sfcd.config.Config('./config/test.mongo.yaml')
+        return sfcd.misc.config.Config('./config/test.mongo.yaml')
 
 
 # db

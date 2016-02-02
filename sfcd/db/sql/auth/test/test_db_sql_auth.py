@@ -2,6 +2,7 @@ import pytest
 
 import sqlalchemy.exc
 
+import sfcd.misc.crypto
 import sfcd.db.sql.auth.base
 import sfcd.db.sql.auth.simple
 import sfcd.db.sql.auth.facebook
@@ -48,7 +49,7 @@ class TestSimpleModel:
         """
         test simple auth creation
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with session_scope() as session:
             i = sfcd.db.sql.auth.base.Model(email=email)
@@ -68,7 +69,7 @@ class TestSimpleModel:
         """
         test simple auth creation with same auth.id
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             with session_scope() as session:
@@ -85,7 +86,7 @@ class TestSimpleModel:
         """
         test rollback for auth records
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with session_scope() as session:
             i = sfcd.db.sql.auth.base.Model(email=email)
@@ -110,7 +111,7 @@ class TestFacebookModel:
         """
         test facebook auth creation
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = sfcd.db.sql.auth.base.Model(email=email)
@@ -138,7 +139,7 @@ class TestFacebookModel:
         """
         test facebook auth creation with same auth.id
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             with session_scope() as session:
@@ -166,7 +167,7 @@ class TestFacebookModel:
         """
         test facebook auth creation with same facebook_id
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with pytest.raises(sqlalchemy.exc.IntegrityError):
             with session_scope() as session:
@@ -256,7 +257,7 @@ class TestSimpleMethod:
         """
         catch exception on existent email
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with session_scope() as session:
             i = sfcd.db.sql.auth.base.Model(email=email)
@@ -289,7 +290,7 @@ class TestSimpleMethod:
                         )
                 ).first()
             assert obj
-            assert sfcd.misc.Crypto.validate_passphrase(
+            assert sfcd.misc.crypto.Crypto.validate_passphrase(
                 password, obj.hashed, obj.salt)
 
     def test__get_auth_token__empty_email(self, manager, password):
@@ -330,7 +331,7 @@ class TestSimpleMethod:
         """
         check invalid password
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -352,7 +353,7 @@ class TestSimpleMethod:
         """
         test if simple auth exists
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -363,7 +364,7 @@ class TestSimpleMethod:
             session.add(p)
         # some token
         token = manager.simple.get_auth_token(email, password)
-        assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert len(token) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token != sfcd.db.sql.auth.base.BaseMethod.AUTH_TOKEN_MOCK
 
     def test__get_auth_token__tokens_equal(
@@ -373,7 +374,7 @@ class TestSimpleMethod:
         """
         test if simple auth exists
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -385,7 +386,7 @@ class TestSimpleMethod:
         # check equal
         token_1 = manager.simple.get_auth_token(email, password)
         token_2 = manager.simple.get_auth_token(email, password)
-        assert len(token_1) == sfcd.misc.Crypto.auth_token_length
+        assert len(token_1) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token_1 == token_2
 
 
@@ -439,7 +440,7 @@ class TestFacebookMethod:
         """
         register: email exists error
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -466,7 +467,7 @@ class TestFacebookMethod:
         """
         register: facebook_id exists error
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -507,7 +508,7 @@ class TestFacebookMethod:
                         )
                 ).first()
             assert obj
-            assert sfcd.misc.Crypto.validate_passphrase(
+            assert sfcd.misc.crypto.Crypto.validate_passphrase(
                 facebook_token, obj.hashed, obj.salt)
 
     def test__get_auth_token__empty_email(
@@ -559,7 +560,7 @@ class TestFacebookMethod:
         """
         get_auth_token: email not exists error
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -586,7 +587,7 @@ class TestFacebookMethod:
         """
         get_auth_token: facebook_id not exists error
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -612,7 +613,7 @@ class TestFacebookMethod:
         """
         get_auth_token: invalid passphrase error
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -638,7 +639,7 @@ class TestFacebookMethod:
         """
         get_auth_token: OK
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -654,7 +655,7 @@ class TestFacebookMethod:
         # some token
         token = manager.facebook.get_auth_token(
             email, facebook_id, facebook_token)
-        assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert len(token) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token != sfcd.db.sql.auth.base.BaseMethod.AUTH_TOKEN_MOCK
 
     def test__get_auth_token__tokens_equal(
@@ -664,7 +665,7 @@ class TestFacebookMethod:
         """
         record exists in db and passphrase check ok
         """
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         #
         with session_scope() as session:
             i = manager.simple._create_id_obj(email)
@@ -682,7 +683,7 @@ class TestFacebookMethod:
             email, facebook_id, facebook_token)
         token_2 = manager.facebook.get_auth_token(
             email, facebook_id, facebook_token)
-        assert len(token_1) == sfcd.misc.Crypto.auth_token_length
+        assert len(token_1) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token_1 == token_2
 
 

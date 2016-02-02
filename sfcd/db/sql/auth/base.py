@@ -2,7 +2,7 @@ import sqlalchemy
 
 import sfcd.db.sql.base
 import sfcd.db.exc
-import sfcd.misc
+import sfcd.misc.crypto
 
 
 class Model(sfcd.db.sql.base.BaseModel):
@@ -23,7 +23,7 @@ class Model(sfcd.db.sql.base.BaseModel):
     )
     auth_token = sqlalchemy.Column(
         sqlalchemy.String(
-            sfcd.misc.Crypto.auth_token_length),
+            sfcd.misc.crypto.Crypto.auth_token_length),
         index=True,  # to process future api reqiests with token
     )
 
@@ -76,7 +76,7 @@ class BaseMethod(object):
         # not so fast but now its dummy
         # and will be replaced with ttl stuff on production
         if id_obj.auth_token == cls.AUTH_TOKEN_MOCK:
-            id_obj.auth_token = sfcd.misc.Crypto.generate_auth_token()
+            id_obj.auth_token = sfcd.misc.crypto.Crypto.generate_auth_token()
             # check here for TTL and so on
             return True
         return False

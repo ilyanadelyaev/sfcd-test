@@ -3,7 +3,8 @@ import logging
 import sqlalchemy
 
 import sfcd.db.sql.base
-import sfcd.misc
+import sfcd.misc.retry
+import sfcd.misc.crypto
 
 import sfcd.db.sql.auth.base
 
@@ -23,10 +24,10 @@ class Model(sfcd.db.sql.base.BaseModel):
         primary_key=True,  # kind a sql-alchemy problem: model must have pk
     )
     hashed = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.hashed_length)
+        sqlalchemy.String(sfcd.misc.crypto.Crypto.hashed_length)
     )
     salt = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.salt_length)
+        sqlalchemy.String(sfcd.misc.crypto.Crypto.salt_length)
     )
 
 
@@ -39,7 +40,7 @@ class SimpleMethod(sfcd.db.sql.auth.base.BaseMethod):
     # TimeoutError
     # IntegrityError - non-unique value
     # retry IntegrityError will raise AuthError
-    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
+    @sfcd.misc.retry.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def register(self, email, password):
         """
         add simple auth record
@@ -48,7 +49,7 @@ class SimpleMethod(sfcd.db.sql.auth.base.BaseMethod):
         # validate email - raises on error
         self._validate_email(email)
         # hash token to store in db
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(password)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(password)
         # connect to database and start transaction
         with self.manager.session_scope() as session:
             # check for email in database
@@ -72,7 +73,7 @@ class SimpleMethod(sfcd.db.sql.auth.base.BaseMethod):
 
     # rewrite it to specific errors
     # TimeoutError
-    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
+    @sfcd.misc.retry.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def get_auth_token(self, email, password):
         """
         get token via sipmle auth
@@ -96,7 +97,7 @@ class SimpleMethod(sfcd.db.sql.auth.base.BaseMethod):
             #
             id_obj, session_obj = objs
             # validate specified password and db data - raises on error
-            if not sfcd.misc.Crypto.validate_passphrase(
+            if not sfcd.misc.crypto.Crypto.validate_passphrase(
                     password, session_obj.hashed, session_obj.salt):
                 raise sfcd.db.exc.AuthError('invalid password')
             # update auth_token if needed

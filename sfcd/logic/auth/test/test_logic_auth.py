@@ -1,6 +1,7 @@
 import pytest
 
 import sfcd.db.exc
+import sfcd.misc.crypto
 import sfcd.logic.exc
 import sfcd.logic.auth.exc
 import sfcd.logic.auth.base
@@ -336,7 +337,7 @@ class TestSimpleMethod:
         token_db = db_engine.auth.simple.get_auth_token(
             email, password)
         #
-        assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert len(token) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token == token_db
 
     def test__signin__equal_tokens(
@@ -354,7 +355,7 @@ class TestSimpleMethod:
             'email': email,
             'password': password,
         })
-        assert len(token_1) == sfcd.misc.Crypto.auth_token_length
+        assert len(token_1) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token_1 == token_2
 
     def test__signup_signin(
@@ -571,7 +572,7 @@ class TestFacebookMethod:
         token_db = db_engine.auth.facebook.get_auth_token(
             email, facebook_id, facebook_token)
         #
-        assert len(token) == sfcd.misc.Crypto.auth_token_length
+        assert len(token) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token == token_db
 
     def test__signin__equal_tokens(
@@ -592,7 +593,7 @@ class TestFacebookMethod:
             'facebook_id': facebook_id,
             'facebook_token': facebook_token,
         })
-        assert len(token_1) == sfcd.misc.Crypto.auth_token_length
+        assert len(token_1) == sfcd.misc.crypto.Crypto.auth_token_length
         assert token_1 == token_2
 
     def test__signup_signin(

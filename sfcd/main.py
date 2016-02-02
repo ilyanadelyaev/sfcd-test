@@ -2,7 +2,7 @@ import argparse
 import logging
 
 import sfcd.application
-import sfcd.config
+import sfcd.misc.config
 
 
 logger = logging.getLogger('sfcd')
@@ -19,7 +19,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # create system config
-    config = sfcd.config.Config(args.config)
+    config = sfcd.misc.config.Config(args.config)
 
     # second param for tests so skip it
     flask_app, _ = \

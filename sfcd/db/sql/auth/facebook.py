@@ -3,7 +3,8 @@ import logging
 import sqlalchemy
 
 import sfcd.db.sql.base
-import sfcd.misc
+import sfcd.misc.crypto
+import sfcd.misc.retry
 
 import sfcd.db.sql.auth.base
 
@@ -29,10 +30,10 @@ class Model(sfcd.db.sql.base.BaseModel):
         index=True,
     )
     hashed = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.hashed_length)
+        sqlalchemy.String(sfcd.misc.crypto.Crypto.hashed_length)
     )
     salt = sqlalchemy.Column(
-        sqlalchemy.String(sfcd.misc.Crypto.salt_length)
+        sqlalchemy.String(sfcd.misc.crypto.Crypto.salt_length)
     )
 
 
@@ -58,7 +59,7 @@ class FacebookMethod(sfcd.db.sql.auth.base.BaseMethod):
     # TimeoutError
     # IntegrityError - non-unique value
     # retry IntegrityError will raise AuthError
-    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
+    @sfcd.misc.retry.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def register(self, email, facebook_id, facebook_token):
         """
         add facebook auth record
@@ -69,7 +70,7 @@ class FacebookMethod(sfcd.db.sql.auth.base.BaseMethod):
         # validate facebook_id - raises on error
         self._validate_facebook_id(facebook_id)
         # hash token to store in db
-        hashed, salt = sfcd.misc.Crypto.hash_passphrase(facebook_token)
+        hashed, salt = sfcd.misc.crypto.Crypto.hash_passphrase(facebook_token)
         # connect to database and start transaction
         with self.manager.session_scope() as session:
             # check for email in database because (unique=True)
@@ -100,7 +101,7 @@ class FacebookMethod(sfcd.db.sql.auth.base.BaseMethod):
 
     # rewrite it to specific errors
     # TimeoutError
-    @sfcd.misc.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
+    @sfcd.misc.retry.retry((sqlalchemy.exc.SQLAlchemyError,), logger=logger)
     def get_auth_token(self, email, facebook_id, facebook_token):
         """
         get token via facebook auth
@@ -133,7 +134,7 @@ class FacebookMethod(sfcd.db.sql.auth.base.BaseMethod):
             #
             id_obj, facebook_obj = objs
             # validate specified token and db data - raises on error
-            if not sfcd.misc.Crypto.validate_passphrase(
+            if not sfcd.misc.crypto.Crypto.validate_passphrase(
                     facebook_token,
                     facebook_obj.hashed, facebook_obj.salt
             ):
