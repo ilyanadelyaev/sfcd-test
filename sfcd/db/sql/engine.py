@@ -4,7 +4,7 @@ import sqlalchemy.orm
 import sfcd.db.sql.base
 
 # register managers here to ensure tables
-from . import auth
+import sfcd.db.sql.auth.manager
 
 
 class DBEngine(object):
@@ -19,7 +19,7 @@ class DBEngine(object):
         self.engine, self.session_maker = \
             self.init_engine(engine_url=engine_url)
         #
-        self.auth = auth.Manager(self.session_maker)
+        self.auth = sfcd.db.sql.auth.manager.Manager(self.session_maker)
 
     @staticmethod
     def init_engine(engine_url):
